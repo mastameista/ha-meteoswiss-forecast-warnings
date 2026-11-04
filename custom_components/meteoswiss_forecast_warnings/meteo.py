@@ -192,6 +192,9 @@ class Forecast:
     sunshine: FloatValue | None = None
 
 
+WARNING_TYPE_OTHER = "other"
+
+
 class WarningType(IntEnum):
     WIND = 0
     THUNDERSTORMS = 1
@@ -207,6 +210,14 @@ class WarningType(IntEnum):
     FLOOD = 11
     DROUGHT = 12
     UNKNOWN = 99
+
+
+# Every state a ranked warning sensor can have, apart from "none" (no
+# warning in that slot), which the sensor adds.
+WARNING_TYPE_STATES = [
+    *(t.name.lower() for t in WarningType if t is not WarningType.UNKNOWN),
+    WARNING_TYPE_OTHER,
+]
 
 
 class WarningLevel(IntEnum):
@@ -254,15 +265,19 @@ class Warning:
 
     @property
     def type_name(self) -> str:
-        """Return a lowercase warning type label for state attributes."""
+        """Return the warning type key, translated by the slot sensors.
+
+        A type MeteoSwiss added after this release is "other"; its code stays
+        in the warning_type_raw attribute.
+        """
+        if self.warningType == WarningType.UNKNOWN:
+            return WARNING_TYPE_OTHER
         return self.warningType.name.lower()
 
     @property
     def type_state(self) -> str:
-        """Return a readable entity state for ranked warning entities."""
-        if self.warningType == WarningType.UNKNOWN and self.raw_type is not None:
-            return f"unknown_{self.raw_type}"
-        return self.warningType.name.lower()
+        """Return the state of a ranked warning entity, one of WARNING_TYPE_STATES."""
+        return self.type_name
 
     @property
     def level_name(self) -> str | None:

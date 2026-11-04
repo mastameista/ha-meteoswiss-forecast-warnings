@@ -50,7 +50,14 @@ from .entity import (
     SwissWeatherWarningEntity,
     build_device_info,
 )
-from .meteo import CurrentWeather, FloatValue, Warning, WarningLevel, WarningType
+from .meteo import (
+    WARNING_TYPE_STATES,
+    CurrentWeather,
+    FloatValue,
+    Warning,
+    WarningLevel,
+    WarningType,
+)
 from .pollen import CurrentPollen, PollenLevel, get_pollen_level
 
 _LOGGER = logging.getLogger(__name__)
@@ -120,6 +127,7 @@ POLLEN_SENSORS: list[SwissPollenSensorEntry] = [
 
 WARNING_SLOT_LABELS = ("primary", "secondary", "tertiary")
 EMPTY_WARNING_STATE = "none"
+WARNING_SLOT_OPTIONS = [*WARNING_TYPE_STATES, EMPTY_WARNING_STATE]
 WARNING_TYPE_ICONS: dict[WarningType, str] = {
     WarningType.WIND: "mdi:weather-windy",
     WarningType.THUNDERSTORMS: "mdi:weather-lightning-rainy",
@@ -372,11 +380,14 @@ class SwissWeatherWarningSlotSensor(
     SwissWeatherWarningEntity,
     SensorEntity,
 ):
+    """Expose the prioritized primary/secondary/tertiary warnings."""
+
     # Warning texts, HTML and links are long and change with every warning;
     # keep them out of the recorder database.
     _unrecorded_attributes = frozenset({MATCH_ALL})
-
-    """Expose the prioritized primary/secondary/tertiary warnings."""
+    # The state is the warning type key; translations name it per language.
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = WARNING_SLOT_OPTIONS
 
 
     def __init__(

@@ -77,3 +77,22 @@ def test_translation_keys_follow_the_hassfest_pattern():
     checked = {k for section in ("selector", "exceptions", "entity", "issues") for k in keys(strings.get(section, {}))}
     bad = sorted(k for k in checked if not valid.match(k))
     assert not bad, bad
+
+
+def test_every_warning_state_is_translated():
+    """Each slot sensor state, and the warning_type attribute, has a name."""
+    meteo = (COMPONENT / "meteo.py").read_text(encoding="utf-8")
+    types = re.search(r"class WarningType\(IntEnum\):\n((?:    .*\n)+)", meteo)
+    assert types is not None
+    keys = {
+        line.split("=")[0].strip().lower()
+        for line in types.group(1).splitlines()
+        if "=" in line
+    }
+    keys = (keys - {"unknown"}) | {"other"}
+    for name in ["strings.json", *(f"translations/{lang}.json" for lang in ("en", "de", "fr", "it"))]:
+        sensors = _load(name)["entity"]["sensor"]
+        for slot in ("primary", "secondary", "tertiary"):
+            entry = sensors[f"{slot}_warning"]
+            assert set(entry["state"]) == keys | {"none"}, (name, slot)
+            assert set(entry["state_attributes"]["warning_type"]["state"]) == keys, (name, slot)

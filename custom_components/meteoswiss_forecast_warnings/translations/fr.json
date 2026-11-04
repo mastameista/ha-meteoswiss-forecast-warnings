@@ -129,13 +129,124 @@
         "name": "Degré de danger le plus élevé"
       },
       "primary_warning": {
-        "name": "Avis de danger principal"
+        "name": "Avis de danger principal",
+        "state": {
+          "wind": "Vent",
+          "thunderstorms": "Orages",
+          "rain": "Pluie",
+          "snow": "Neige",
+          "slippery_roads": "Routes glissantes",
+          "frost": "Gel",
+          "thaw": "Dégel",
+          "heat_waves": "Canicule",
+          "avalanches": "Avalanches",
+          "earthquakes": "Tremblements de terre",
+          "forest_fires": "Feux de forêt",
+          "flood": "Crues",
+          "drought": "Sécheresse",
+          "other": "Autre avis de danger",
+          "none": "Aucun avis de danger"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Vent",
+              "thunderstorms": "Orages",
+              "rain": "Pluie",
+              "snow": "Neige",
+              "slippery_roads": "Routes glissantes",
+              "frost": "Gel",
+              "thaw": "Dégel",
+              "heat_waves": "Canicule",
+              "avalanches": "Avalanches",
+              "earthquakes": "Tremblements de terre",
+              "forest_fires": "Feux de forêt",
+              "flood": "Crues",
+              "drought": "Sécheresse",
+              "other": "Autre avis de danger"
+            }
+          }
+        }
       },
       "secondary_warning": {
-        "name": "Avis de danger secondaire"
+        "name": "Avis de danger secondaire",
+        "state": {
+          "wind": "Vent",
+          "thunderstorms": "Orages",
+          "rain": "Pluie",
+          "snow": "Neige",
+          "slippery_roads": "Routes glissantes",
+          "frost": "Gel",
+          "thaw": "Dégel",
+          "heat_waves": "Canicule",
+          "avalanches": "Avalanches",
+          "earthquakes": "Tremblements de terre",
+          "forest_fires": "Feux de forêt",
+          "flood": "Crues",
+          "drought": "Sécheresse",
+          "other": "Autre avis de danger",
+          "none": "Aucun avis de danger"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Vent",
+              "thunderstorms": "Orages",
+              "rain": "Pluie",
+              "snow": "Neige",
+              "slippery_roads": "Routes glissantes",
+              "frost": "Gel",
+              "thaw": "Dégel",
+              "heat_waves": "Canicule",
+              "avalanches": "Avalanches",
+              "earthquakes": "Tremblements de terre",
+              "forest_fires": "Feux de forêt",
+              "flood": "Crues",
+              "drought": "Sécheresse",
+              "other": "Autre avis de danger"
+            }
+          }
+        }
       },
       "tertiary_warning": {
-        "name": "Avis de danger tertiaire"
+        "name": "Avis de danger tertiaire",
+        "state": {
+          "wind": "Vent",
+          "thunderstorms": "Orages",
+          "rain": "Pluie",
+          "snow": "Neige",
+          "slippery_roads": "Routes glissantes",
+          "frost": "Gel",
+          "thaw": "Dégel",
+          "heat_waves": "Canicule",
+          "avalanches": "Avalanches",
+          "earthquakes": "Tremblements de terre",
+          "forest_fires": "Feux de forêt",
+          "flood": "Crues",
+          "drought": "Sécheresse",
+          "other": "Autre avis de danger",
+          "none": "Aucun avis de danger"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Vent",
+              "thunderstorms": "Orages",
+              "rain": "Pluie",
+              "snow": "Neige",
+              "slippery_roads": "Routes glissantes",
+              "frost": "Gel",
+              "thaw": "Dégel",
+              "heat_waves": "Canicule",
+              "avalanches": "Avalanches",
+              "earthquakes": "Tremblements de terre",
+              "forest_fires": "Feux de forêt",
+              "flood": "Crues",
+              "drought": "Sécheresse",
+              "other": "Autre avis de danger"
+            }
+          }
+        }
       },
       "pollen_time": {
         "name": "Heure de mesure du pollen"

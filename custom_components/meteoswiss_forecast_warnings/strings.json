@@ -129,13 +129,124 @@
         "name": "Highest weather warning level"
       },
       "primary_warning": {
-        "name": "Primary weather warning"
+        "name": "Primary weather warning",
+        "state": {
+          "wind": "Wind",
+          "thunderstorms": "Thunderstorms",
+          "rain": "Rain",
+          "snow": "Snow",
+          "slippery_roads": "Slippery roads",
+          "frost": "Frost",
+          "thaw": "Thaw",
+          "heat_waves": "Heat wave",
+          "avalanches": "Avalanches",
+          "earthquakes": "Earthquakes",
+          "forest_fires": "Forest fires",
+          "flood": "Floods",
+          "drought": "Drought",
+          "other": "Other warning",
+          "none": "No warning"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Wind",
+              "thunderstorms": "Thunderstorms",
+              "rain": "Rain",
+              "snow": "Snow",
+              "slippery_roads": "Slippery roads",
+              "frost": "Frost",
+              "thaw": "Thaw",
+              "heat_waves": "Heat wave",
+              "avalanches": "Avalanches",
+              "earthquakes": "Earthquakes",
+              "forest_fires": "Forest fires",
+              "flood": "Floods",
+              "drought": "Drought",
+              "other": "Other warning"
+            }
+          }
+        }
       },
       "secondary_warning": {
-        "name": "Secondary weather warning"
+        "name": "Secondary weather warning",
+        "state": {
+          "wind": "Wind",
+          "thunderstorms": "Thunderstorms",
+          "rain": "Rain",
+          "snow": "Snow",
+          "slippery_roads": "Slippery roads",
+          "frost": "Frost",
+          "thaw": "Thaw",
+          "heat_waves": "Heat wave",
+          "avalanches": "Avalanches",
+          "earthquakes": "Earthquakes",
+          "forest_fires": "Forest fires",
+          "flood": "Floods",
+          "drought": "Drought",
+          "other": "Other warning",
+          "none": "No warning"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Wind",
+              "thunderstorms": "Thunderstorms",
+              "rain": "Rain",
+              "snow": "Snow",
+              "slippery_roads": "Slippery roads",
+              "frost": "Frost",
+              "thaw": "Thaw",
+              "heat_waves": "Heat wave",
+              "avalanches": "Avalanches",
+              "earthquakes": "Earthquakes",
+              "forest_fires": "Forest fires",
+              "flood": "Floods",
+              "drought": "Drought",
+              "other": "Other warning"
+            }
+          }
+        }
       },
       "tertiary_warning": {
-        "name": "Tertiary weather warning"
+        "name": "Tertiary weather warning",
+        "state": {
+          "wind": "Wind",
+          "thunderstorms": "Thunderstorms",
+          "rain": "Rain",
+          "snow": "Snow",
+          "slippery_roads": "Slippery roads",
+          "frost": "Frost",
+          "thaw": "Thaw",
+          "heat_waves": "Heat wave",
+          "avalanches": "Avalanches",
+          "earthquakes": "Earthquakes",
+          "forest_fires": "Forest fires",
+          "flood": "Floods",
+          "drought": "Drought",
+          "other": "Other warning",
+          "none": "No warning"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Wind",
+              "thunderstorms": "Thunderstorms",
+              "rain": "Rain",
+              "snow": "Snow",
+              "slippery_roads": "Slippery roads",
+              "frost": "Frost",
+              "thaw": "Thaw",
+              "heat_waves": "Heat wave",
+              "avalanches": "Avalanches",
+              "earthquakes": "Earthquakes",
+              "forest_fires": "Forest fires",
+              "flood": "Floods",
+              "drought": "Drought",
+              "other": "Other warning"
+            }
+          }
+        }
       },
       "pollen_time": {
         "name": "Pollen time"

@@ -16,6 +16,7 @@ from custom_components.meteoswiss_forecast_warnings.meteo import (
     parse_warning_type,
 )
 from custom_components.meteoswiss_forecast_warnings.sensor import (
+    WARNING_SLOT_OPTIONS,
     get_color_for_warning_level,
     get_icon_for_warning,
 )
@@ -134,7 +135,8 @@ def test_snapshot_keeps_unknown_level_raw_value():
     )
     snapshot = build_warning_snapshot([unknown], now=now)
     assert snapshot.primary is not None
-    assert snapshot.primary.type_state == "unknown_42"
+    assert snapshot.primary.type_state == "other"
+    assert snapshot.primary.raw_type == 42
     assert snapshot.highest_level == 7
 
 
@@ -181,3 +183,12 @@ def test_warning_type_icon_mapping(warning_type, expected_icon):
 
 def test_empty_warning_icon_mapping():
     assert get_icon_for_warning(None) == "mdi:alert-outline"
+
+
+@pytest.mark.parametrize("warning_type", list(WarningType))
+def test_every_warning_type_is_an_option_of_the_slot_sensors(warning_type):
+    """Home Assistant rejects an enum state that is not among the options."""
+    warning = make_warning(warning_type=warning_type, raw_type=42)
+
+    assert warning.type_state in WARNING_SLOT_OPTIONS
+    assert "none" in WARNING_SLOT_OPTIONS
