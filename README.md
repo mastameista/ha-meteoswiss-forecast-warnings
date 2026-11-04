@@ -154,6 +154,33 @@ content: |
   {% for link in state_attr(e, 'links') or [] %}[{{ link.text }}]({{ link.url }}) {% endfor %}
 ```
 
+For a more compact view, the [Mushroom](https://github.com/piitaya/lovelace-mushroom) template card (a custom card, installed from HACS) shows the warning with its colour, the validity and the start of the text:
+
+![Weather warnings in Mushroom template cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/mushroom-warnings.png)
+
+```yaml
+type: custom:mushroom-template-card
+entity: sensor.zurich_primary_weather_warning
+icon: "{{ state_attr('sensor.zurich_primary_weather_warning', 'icon') }}"
+icon_color: "{{ state_attr('sensor.zurich_primary_weather_warning', 'icon_color') }}"
+primary: >-
+  {{ state_translated('sensor.zurich_primary_weather_warning') }} ·
+  {{ state_attr('sensor.zurich_primary_weather_warning', 'level_name') }}
+secondary: |-
+  {%- set start = state_attr('sensor.zurich_primary_weather_warning', 'valid_from') -%}
+  {% if start %}Since {{ as_timestamp(start) | timestamp_custom('%d.%m.%Y') }}{% endif %}
+  {{ state_attr('sensor.zurich_primary_weather_warning', 'text') | truncate(220) }}
+multiline_secondary: true
+badge_icon: >-
+  {% set n = states('sensor.zurich_weather_warning_count') | int(0) %}
+  {% if n > 1 %}mdi:numeric-{{ [n, 9] | min }}{% endif %}
+badge_color: red
+visibility:
+  - condition: state
+    entity: sensor.zurich_primary_weather_warning
+    state_not: none
+```
+
 Show the forecast in a dashboard:
 
 ```yaml
