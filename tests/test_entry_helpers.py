@@ -185,8 +185,10 @@ def test_ensure_entry_names_backfills_forecast_name_from_legacy_postal_code():
     )
 
 
-def _postal_code_entry_data(points):
-    entry = SimpleNamespace(data={CONF_POST_CODE: "1000"}, title="Weather at 1000")
+def _postal_code_entry_data(points, post_code="1000"):
+    entry = SimpleNamespace(
+        data={CONF_POST_CODE: post_code}, title=f"Weather at {post_code}"
+    )
     hass = SimpleNamespace(config_entries=SimpleNamespace(async_update_entry=Mock()))
     metadata = SwissWeatherMetadata(
         forecast_points=points, weather_stations=[], pollen_stations=[]
@@ -219,6 +221,19 @@ def test_postal_code_prefers_its_centre_point():
     )
 
     assert data["forecastPointId"] == "100000"
+
+
+def test_city_wide_postal_code_takes_the_first_point_of_its_block():
+    """Regression: 3000 Bern has no point at all; the entry stayed in setup_retry."""
+    data = _postal_code_entry_data(
+        [ForecastPoint("300400", "2", "3004", "Bern", "ZIP", 0, 0.0, 0.0)],
+        post_code="3000",
+    )
+
+    assert data["forecastPointId"] == "300400"
+    assert data["forecastName"] == "Bern"
+    # The postal code stays: entity unique IDs are built from it.
+    assert data[CONF_POST_CODE] == "3000"
 
 
 def test_postal_code_without_metadata_keeps_the_default_point():

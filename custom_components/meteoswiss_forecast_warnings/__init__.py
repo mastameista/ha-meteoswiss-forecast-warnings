@@ -46,6 +46,7 @@ from .forecast_points import (
     async_load_forecast_point_list,
     find_forecast_point_by_id,
     find_forecast_point_by_stored_value,
+    find_forecast_point_for_postal_code,
 )
 from .naming import (
     build_entry_title,
@@ -464,15 +465,22 @@ def _async_sync_repairs_issues(
     )
 
     if metadata.forecast_points_loaded:
-        forecast_missing = bool(
-            post_code
-            and find_forecast_point_by_stored_value(
-                metadata.forecast_points,
-                post_code,
-                entry.data.get(CONF_FORECAST_POINT_TYPE),
+        forecast_point_id = entry.data.get(CONF_FORECAST_POINT_ID)
+        if forecast_point_id:
+            forecast_missing = (
+                find_forecast_point_by_id(metadata.forecast_points, forecast_point_id)
+                is None
             )
-            is None
-        )
+        else:
+            forecast_missing = bool(
+                post_code
+                and find_forecast_point_by_stored_value(
+                    metadata.forecast_points,
+                    post_code,
+                    entry.data.get(CONF_FORECAST_POINT_TYPE),
+                )
+                is None
+            )
         _async_update_metadata_issue(
             hass,
             entry,
@@ -656,9 +664,19 @@ async def _async_ensure_entry_names(
     forecast_name = entry.data.get(CONF_FORECAST_NAME)
     post_code = str(entry.data.get(CONF_POST_CODE, "")).strip()
     forecast_point_type = entry.data.get(CONF_FORECAST_POINT_TYPE)
+    # Entries from Swiss Weather store a 4-digit postal code; see
+    # find_forecast_point_for_postal_code for the point it maps to.
+    postal_code_point = (
+        find_forecast_point_for_postal_code(metadata.forecast_points, post_code)
+        if post_code.isdigit() and len(post_code) == 4
+        else None
+    )
     if not forecast_name or forecast_name == post_code:
-        forecast_point = find_forecast_point_by_stored_value(
-            metadata.forecast_points, post_code, forecast_point_type
+        forecast_point = (
+            find_forecast_point_by_stored_value(
+                metadata.forecast_points, post_code, forecast_point_type
+            )
+            or postal_code_point
         )
         forecast_name = (
             forecast_point.display_name if forecast_point is not None else post_code
@@ -666,26 +684,20 @@ async def _async_ensure_entry_names(
         if forecast_point is not None and forecast_point_type != forecast_point.point_type_id:
             data_updates[CONF_FORECAST_POINT_TYPE] = forecast_point.point_type_id
     elif forecast_point_type is None:
-        forecast_point = find_forecast_point_by_stored_value(
-            metadata.forecast_points, post_code, forecast_point_type
+        forecast_point = (
+            find_forecast_point_by_stored_value(
+                metadata.forecast_points, post_code, forecast_point_type
+            )
+            or postal_code_point
         )
         if forecast_point is not None:
             data_updates[CONF_FORECAST_POINT_TYPE] = forecast_point.point_type_id
     if forecast_name and entry.data.get(CONF_FORECAST_NAME) != forecast_name:
         data_updates[CONF_FORECAST_NAME] = forecast_name
-    if (
-        CONF_FORECAST_POINT_ID not in entry.data
-        and post_code.isdigit()
-        and len(post_code) == 4
-    ):
-        # A 4-digit postal code usually has the point "<postal code>00", but
-        # not always: 1000 Lausanne has only 100025 to 100027, and the API
-        # answers 100000 with an error. Store the point to fetch instead.
-        forecast_point = find_forecast_point_by_id(
-            metadata.forecast_points, f"{post_code}00"
-        ) or find_forecast_point_by_stored_value(metadata.forecast_points, post_code, "2")
-        if forecast_point is not None:
-            data_updates[CONF_FORECAST_POINT_ID] = forecast_point.point_id
+    if CONF_FORECAST_POINT_ID not in entry.data and postal_code_point is not None:
+        # The app backend answers a point that does not exist (100000,
+        # 300000) with an error; store the point to fetch instead.
+        data_updates[CONF_FORECAST_POINT_ID] = postal_code_point.point_id
 
     if entry.data.get(CONF_STATION_CODE):
         station = find_station_by_code(

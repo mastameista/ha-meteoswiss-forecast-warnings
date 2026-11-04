@@ -229,6 +229,39 @@ def find_forecast_point_by_stored_value(
     )[0]
 
 
+def find_forecast_point_for_postal_code(
+    points: list[ForecastPoint], postal_code: str
+) -> ForecastPoint | None:
+    """Return the point to fetch the forecast for a bare 4-digit postal code.
+
+    Entries from Swiss Weather store such a code and fetched "<code>00". That
+    point usually exists, but not always: 1000 Lausanne has only 100025 to
+    100027, and city-wide codes such as 3000 Bern, 4000 Basel or 8000 Zurich
+    have no point at all. For a city-wide code (ending in 00) without one,
+    take the first postal code of the same hundred block that has a point:
+    3004 Bern, 4001 Basel, 8001 Zurich.
+    """
+    point = find_forecast_point_by_id(
+        points, f"{postal_code}00"
+    ) or find_forecast_point_by_stored_value(points, postal_code, "2")
+    if point is not None or not postal_code.endswith("00"):
+        return point
+    block = [
+        candidate
+        for candidate in points
+        if candidate.point_type_id == "2"
+        and candidate.postal_code is not None
+        and len(candidate.postal_code) == 4
+        and candidate.postal_code.isdigit()
+        and candidate.postal_code[:2] == postal_code[:2]
+    ]
+    return min(
+        block,
+        key=lambda candidate: (candidate.postal_code or "", candidate.point_id),
+        default=None,
+    )
+
+
 def search_forecast_points(
     points: list[ForecastPoint], query: str
 ) -> list[ForecastPoint]:
