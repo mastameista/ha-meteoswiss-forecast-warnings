@@ -146,6 +146,25 @@ WARNING_TYPE_ICONS: dict[WarningType, str] = {
 }
 
 
+def _sea_level_pressure_defaults(current: CurrentWeather | None) -> dict[str, bool]:
+    """Pick which sea-level pressure sensor is enabled by default.
+
+    Every station that reports pressure reports QNH, but only about a third
+    report QFF (59 of 159 in November 2026). QFF stays the default where the
+    station reports it; otherwise QNH is enabled instead, so the visible
+    sensor has a value. Home Assistant applies this only when an entity is
+    first registered.
+    """
+    if current is None:
+        return {}
+    if (
+        first_or_none(current.pressureSeaLevel) is None
+        and first_or_none(current.pressureSeaLevelAtStandardAtmosphere) is not None
+    ):
+        return {"pressure_qff": False, "pressure_qnh": True}
+    return {}
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -176,10 +195,20 @@ async def async_setup_entry(
         weather_device = build_device_info(
             config_entry.entry_id, DEVICE_WEATHER_STATION, weather_station_name
         )
+        enabled_defaults = _sea_level_pressure_defaults(
+            coordinator.data.current_weather if coordinator.data else None
+        )
         entities.extend(
             [
                 SwissWeatherSensor(
-                    postCode, weather_station_name, weather_device, sensorEntry, coordinator
+                    postCode,
+                    weather_station_name,
+                    weather_device,
+                    sensorEntry,
+                    coordinator,
+                    enabled_default=enabled_defaults.get(
+                        sensorEntry.key, sensorEntry.enabled_by_default
+                    ),
                 )
                 for sensorEntry in SENSORS
             ]
@@ -246,6 +275,7 @@ class SwissWeatherSensor(SwissWeatherEntity, SensorEntity):
         device_info: DeviceInfo,
         sensor_entry: SwissWeatherSensorEntry,
         coordinator: SwissWeatherDataCoordinator,
+        enabled_default: bool | None = None,
     ) -> None:
         super().__init__(coordinator, device_info)
         self.entity_description = SensorEntityDescription(
@@ -255,7 +285,11 @@ class SwissWeatherSensor(SwissWeatherEntity, SensorEntity):
             device_class=sensor_entry.device_class,
             state_class=sensor_entry.state_class,
             entity_category=sensor_entry.entity_category,
-            entity_registry_enabled_default=sensor_entry.enabled_by_default,
+            entity_registry_enabled_default=(
+                sensor_entry.enabled_by_default
+                if enabled_default is None
+                else enabled_default
+            ),
         )
         self._sensor_entry = sensor_entry
         self._attr_unique_id = f"{post_code}.{sensor_entry.key}"

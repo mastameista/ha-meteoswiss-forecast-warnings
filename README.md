@@ -93,7 +93,7 @@ Warning levels: 1 no or minimal danger, 2 moderate, 3 considerable, 4 high, 5 ve
 
 ### Weather station
 
-Temperature, precipitation (10 min), sunshine (10 min), global radiation, relative humidity, dew point, wind direction, wind speed, wind gusts (peak 1 s), air pressure at station level and at sea level (QFF). The sea-level pressure QNH and the measurement time are disabled by default; enable them under the device if you need them.
+Temperature, precipitation (10 min), sunshine (10 min), global radiation, relative humidity, dew point, wind direction, wind speed, wind gusts (peak 1 s), air pressure at station level and at sea level (QFF). Of the two sea-level pressures, QFF is enabled where the station reports it and QNH otherwise; many stations report only QNH. The other one and the measurement time are disabled by default; enable them under the device if you need them.
 
 ### Pollen station
 
@@ -123,6 +123,31 @@ actions:
         {{ state_attr('sensor.zurich_primary_weather_warning', 'level_name') }}:
         {{ states('sensor.zurich_primary_weather_warning') }}
       message: "{{ state_attr('sensor.zurich_primary_weather_warning', 'text') }}"
+```
+
+Show a warning with its level, validity, text and links in a Markdown card, without any custom cards. Add one card per slot (`primary`, `secondary`, `tertiary`):
+
+```yaml
+type: markdown
+visibility:
+  - condition: state
+    entity: sensor.zurich_primary_weather_warning
+    state_not: none
+content: |
+  {% set e = 'sensor.zurich_primary_weather_warning' %}
+  {% set level = state_attr(e, 'warning_level') | int(0) %}
+  {% set start = state_attr(e, 'valid_from') %}
+  {% set end = state_attr(e, 'valid_to') %}
+  <ha-alert alert-type="{{ 'error' if level >= 4 else 'warning' if level >= 3 else 'info' }}">
+  <ha-icon icon="{{ state_attr(e, 'icon') }}"></ha-icon>
+  <strong>{{ state_translated(e) }}</strong> · {{ state_attr(e, 'level_name') }} (level {{ level }})
+  {%- if start %}<br>From {{ as_timestamp(start) | timestamp_custom('%a %d.%m. %H:%M') }}{% endif %}
+  {%- if end %} until {{ as_timestamp(end) | timestamp_custom('%a %d.%m. %H:%M') }}{% endif %}
+  </ha-alert>
+
+  {{ state_attr(e, 'text') }}
+
+  {% for link in state_attr(e, 'links') or [] %}[{{ link.text }}]({{ link.url }}) {% endfor %}
 ```
 
 Show the forecast in a dashboard:

@@ -89,6 +89,18 @@ async def test_full_setup_creates_three_devices_and_live_entities(hass, meteoswi
     assert "pollen-800100.birch" in entities
 
 
+async def test_station_without_qff_enables_qnh_instead(hass, meteoswiss_api):
+    """Jungfraujoch reports QNH but no QFF, like most MeteoSwiss stations."""
+    entry = await _setup(
+        hass, {**FULL, CONF_STATION_CODE: "JUN", CONF_STATION_NAME: "Jungfraujoch VS"}
+    )
+
+    entities = _entities(hass, entry)
+    assert entities["800100.pressure_qff"].disabled_by is not None
+    assert entities["800100.pressure_qnh"].disabled_by is None
+    assert float(hass.states.get(entities["800100.pressure_qnh"].entity_id).state) == 1038.4
+
+
 async def test_weather_entity_serves_hourly_and_daily_forecasts(
     hass, meteoswiss_api, freezer
 ):

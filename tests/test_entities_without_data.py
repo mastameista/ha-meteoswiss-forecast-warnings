@@ -23,6 +23,7 @@ from custom_components.meteoswiss_forecast_warnings.meteo import (
     parse_warning_type,
 )
 from custom_components.meteoswiss_forecast_warnings.sensor import (
+    _sea_level_pressure_defaults,
     POLLEN_SENSORS,
     SENSORS,
     SwissPollenLevelSensor,
@@ -98,3 +99,22 @@ def test_undecodable_station_csv_is_a_data_error(monkeypatch):
 
     with pytest.raises(MeteoSwissDataError):
         asyncio.run(MeteoClient(session=object())._async_get_csv_dictionary_for_url("http://x"))
+
+
+@pytest.mark.parametrize(
+    ("qff", "qnh", "expected"),
+    [
+        ((1027.8, "hPa"), (1029.1, "hPa"), {}),  # station reports QFF: defaults stay
+        (None, (1038.4, "hPa"), {"pressure_qff": False, "pressure_qnh": True}),
+        ((None, "hPa"), (1038.4, "hPa"), {"pressure_qff": False, "pressure_qnh": True}),
+        (None, None, {}),  # no pressure at all: nothing to prefer
+    ],
+)
+def test_sea_level_pressure_defaults(qff, qnh, expected):
+    current = SimpleNamespace(pressureSeaLevel=qff, pressureSeaLevelAtStandardAtmosphere=qnh)
+
+    assert _sea_level_pressure_defaults(current) == expected
+
+
+def test_sea_level_pressure_defaults_without_station_data():
+    assert _sea_level_pressure_defaults(None) == {}
