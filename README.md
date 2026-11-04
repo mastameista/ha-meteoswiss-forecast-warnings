@@ -5,7 +5,7 @@
 [![Tests](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml)
 [![HACS Validate](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml)
 
-**Unofficial** Home Assistant integration for Swiss weather data from MeteoSwiss: the local forecast as the MeteoSwiss app shows it, every official weather warning for your place (active and upcoming), live measurements from a weather station and pollen counts.
+Home Assistant integration for Swiss weather data from MeteoSwiss: the local forecast as the MeteoSwiss app shows it, every official weather warning for your place (active and upcoming), live measurements from a weather station and pollen counts. A community project, not affiliated with MeteoSwiss.
 
 ![Forecast, weather warnings, weather station and pollen in Home Assistant's own cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/overview.png)
 
