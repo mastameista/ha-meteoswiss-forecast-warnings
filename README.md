@@ -7,6 +7,8 @@
 
 **Unofficial** Home Assistant integration for Swiss weather data from MeteoSwiss: the local forecast as the MeteoSwiss app shows it, every official weather warning for your place (active and upcoming), live measurements from a weather station and pollen counts.
 
+![Forecast, weather warnings, weather station and pollen in Home Assistant's own cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/overview.png)
+
 ## Why this integration
 
 - **The forecast you know from the app.** For the local forecast of its app, MeteoSwiss combines several weather models (INCA, ICON-CH1, ICON-CH2 and ECMWF). This integration shows exactly that forecast, not the output of a single raw model.
@@ -126,6 +128,8 @@ actions:
 ```
 
 Show a warning with its level, validity, text and links in a Markdown card, without any custom cards. Add one card per slot (`primary`, `secondary`, `tertiary`):
+
+![Weather warnings in Markdown cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/markdown-warnings.png)
 
 ```yaml
 type: markdown
