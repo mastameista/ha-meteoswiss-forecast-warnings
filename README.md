@@ -1,6 +1,6 @@
 # MeteoSwiss Forecast & Warnings
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories/)
+[![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
 [![Release](https://img.shields.io/github/v/release/mastameista/ha-meteoswiss-forecast-warnings)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/releases)
 [![Tests](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml)
 [![HACS Validate](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml)
@@ -45,10 +45,9 @@ The integration needs Home Assistant **2026.10** or newer.
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mastameista&repository=ha-meteoswiss-forecast-warnings&category=integration)
 
-1. In HACS, open the menu (three dots, top right) and select **Custom repositories**.
-2. Enter `https://github.com/mastameista/ha-meteoswiss-forecast-warnings`, select the type **Integration** and select **Add**.
-3. Search for **MeteoSwiss Forecast & Warnings** and download it.
-4. Restart Home Assistant.
+1. In HACS, search for **MeteoSwiss Forecast & Warnings** and open it.
+2. Select **Download**.
+3. Restart Home Assistant.
 
 ### Manually
 
