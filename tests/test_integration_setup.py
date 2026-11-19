@@ -130,10 +130,11 @@ async def test_weather_entity_serves_hourly_and_daily_forecasts(
 
 
 async def test_forecast_subscribers_receive_updated_forecasts(
-    hass, meteoswiss_api, freezer, hass_ws_client
+    hass, meteoswiss_api, hass_ws_client
 ):
     """Open forecast cards must get new forecasts, not keep the first one."""
-    freezer.move_to("2026-10-03T22:30:00+00:00")
+    # Daily forecasts are not filtered by the current time, so the clock can
+    # stay real (a frozen clock would also invalidate the websocket token).
     entry = await _setup(hass, FULL)
     weather_id = _entities(hass, entry)["swiss_weather.800100"].entity_id
     client = await hass_ws_client(hass)
