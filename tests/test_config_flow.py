@@ -48,6 +48,18 @@ class FakeHass:
         )
 
 
+@pytest.fixture(autouse=True)
+def no_forecast_point_list(monkeypatch):
+    """The stations step measures distances from the forecast point.
+
+    Tests that need forecast points patch the list themselves; the others
+    get an empty list instead of a request through the stand-in session.
+    """
+    monkeypatch.setattr(
+        config_flow_module, "async_load_forecast_point_list", AsyncMock(return_value=[])
+    )
+
+
 def create_flow(
     source: str = config_entries.SOURCE_USER,
 ) -> ConfigFlow:

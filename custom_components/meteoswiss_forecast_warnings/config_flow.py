@@ -39,6 +39,7 @@ from .forecast_points import (
     ForecastPointMetadataLoadError,
     async_load_forecast_point_list,
     find_forecast_point_by_id,
+    find_forecast_point_by_stored_value,
     format_forecast_point_label,
     search_forecast_points,
 )
@@ -98,6 +99,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._forecast_points_cache: list[Any] | None = None
         self._weather_stations_cache: list[WeatherStation] | None = None
         self._pollen_stations_cache: list[WeatherStation] | None = None
+        # Where station distances are measured from; see _async_reference_location.
+        self._reference_location: tuple[float, float] | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -318,6 +321,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
         """Show the second step with station and pollen options."""
+        self._reference_location = await self._async_reference_location()
         station_options = await self._get_weather_station_options()
         pollen_station_options = await self._get_pollen_station_options()
         group_options = await self._get_group_station_options()
@@ -479,11 +483,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 raise AbortFlow("already_configured")
 
     def format_station_name_for_dropdown(self, station: WeatherStation) -> str:
-        """Format a weather/pollen station option for the dropdown."""
+        """Format a station option, e.g. "Pully (VD) · 4.2 km · 461 m".
+
+        The altitude helps to pick a station at a similar height: a summit
+        station a few kilometres away measures something else than the valley.
+        """
+        parts = [f"{station.name} ({station.canton})"]
         station_distance = self._get_distance_to_station(station)
-        if station_distance is None:
-            return f"{station.name} ({station.canton})"
-        return f"{station.name} ({station.canton}) · {station_distance / 1000:.0f} km"
+        if station_distance is not None:
+            kilometres = station_distance / 1000
+            parts.append(
+                f"{kilometres:.1f} km" if kilometres < 10 else f"{kilometres:.0f} km"
+            )
+        if station.altitude is not None:
+            parts.append(f"{station.altitude} m")
+        return " · ".join(parts)
 
     async def _get_weather_station_options(self) -> list[SelectOptionDict]:
         """Load weather station options for the dropdown."""
@@ -492,7 +506,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             for station in await self._async_get_weather_stations()
             if station.measures(MAIN_STATION_MEASUREMENT)
         ]
-        if self.hass.config.latitude is not None and self.hass.config.longitude is not None:
+        if self._distance_reference() is not None:
             stations = sorted(stations, key=self._station_sort_key)
         return [
             SelectOptionDict(
@@ -508,7 +522,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _get_group_station_options(self) -> dict[str, list[SelectOptionDict]]:
         """Load, per measurement group, the stations that measure it."""
         stations = await self._async_get_weather_stations()
-        if self.hass.config.latitude is not None and self.hass.config.longitude is not None:
+        if self._distance_reference() is not None:
             stations = sorted(stations, key=self._station_sort_key)
         return {
             group: [
@@ -525,7 +539,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _get_pollen_station_options(self) -> list[SelectOptionDict]:
         """Load pollen station options for the dropdown."""
         pollen_stations = await self._async_get_pollen_stations()
-        if self.hass.config.latitude is not None and self.hass.config.longitude is not None:
+        if self._distance_reference() is not None:
             pollen_stations = sorted(pollen_stations, key=self._station_sort_key)
         return [
             SelectOptionDict(
@@ -538,17 +552,50 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ],
         ]
 
-    def _get_distance_to_station(self, station: WeatherStation) -> float | None:
-        """Return the distance in metres from the HA home location, or None.
+    async def _async_reference_location(self) -> tuple[float, float] | None:
+        """Return the forecast place, which station distances are measured from.
 
-        None means unknown: either the home location or the station's
+        Stations near the place matter, not near home: a holiday flat or a
+        peak lies elsewhere. When reconfiguring, the place is the entry's
+        stored forecast point. Without coordinates for it, the Home
+        Assistant location is used.
+        """
+        point_id = self._selected_forecast_point_id
+        point_type = self._selected_forecast_point_type
+        if point_id is None and self.source == config_entries.SOURCE_RECONFIGURE:
+            data = self._get_reconfigure_entry().data
+            point_id = data.get(CONF_FORECAST_POINT_ID) or data.get(CONF_POST_CODE)
+            point_type = data.get(CONF_FORECAST_POINT_TYPE)
+        if point_id is not None:
+            try:
+                points = await self._async_get_forecast_points()
+            except ForecastPointMetadataLoadError:
+                points = []
+            point = find_forecast_point_by_stored_value(points, point_id, point_type)
+            if point is not None and point.lat is not None and point.lng is not None:
+                return (point.lat, point.lng)
+        return None
+
+    def _distance_reference(self) -> tuple[float, float] | None:
+        """Return the forecast place, or the Home Assistant location."""
+        if self._reference_location is not None:
+            return self._reference_location
+        latitude = self.hass.config.latitude
+        longitude = self.hass.config.longitude
+        if latitude is None or longitude is None:
+            return None
+        return (latitude, longitude)
+
+    def _get_distance_to_station(self, station: WeatherStation) -> float | None:
+        """Return the distance in metres from the forecast place, or None.
+
+        None means unknown: either the reference location or the station's
         coordinates are missing (pollen metadata can lack them).
         """
-        h_lat = self.hass.config.latitude
-        h_lng = self.hass.config.longitude
-        if None in (h_lat, h_lng, station.lat, station.lng):
+        reference = self._distance_reference()
+        if reference is None or station.lat is None or station.lng is None:
             return None
-        return distance(h_lat, h_lng, station.lat, station.lng)
+        return distance(reference[0], reference[1], station.lat, station.lng)
 
     def _station_sort_key(self, station: WeatherStation) -> tuple[bool, float]:
         """Sort by distance, stations with an unknown distance last."""
