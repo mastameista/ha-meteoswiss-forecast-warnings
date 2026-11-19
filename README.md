@@ -1,6 +1,6 @@
 # MeteoSwiss Forecast & Warnings
 
-[![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
+[![Home Assistant Marketplace](https://img.shields.io/badge/Marketplace-catalog-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![Release](https://img.shields.io/github/v/release/mastameista/ha-meteoswiss-forecast-warnings)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/releases)
 [![Tests](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/test.yaml)
 [![HACS Validate](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml/badge.svg)](https://github.com/mastameista/ha-meteoswiss-forecast-warnings/actions/workflows/validate.yaml)
@@ -41,13 +41,16 @@ A few examples of what you can do with it:
 
 The integration needs Home Assistant **2026.10** or newer.
 
-### With HACS
+### From the Marketplace
 
-[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mastameista&repository=ha-meteoswiss-forecast-warnings&category=integration)
+[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=mastameista&repository=ha-meteoswiss-forecast-warnings&category=integration)
 
-1. In HACS, search for **MeteoSwiss Forecast & Warnings** and open it.
-2. Select **Download**.
-3. Restart Home Assistant.
+1. Go to **Settings → Marketplace**, search for **MeteoSwiss Forecast & Warnings** and open it.
+2. Select **Install** and confirm. The setup of the integration starts right away (see [Configuration](#configuration)).
+
+New versions appear under **Settings → Updates**. After an update, restart Home Assistant; a repair issue reminds you.
+
+On Home Assistant 2026.10, which has no Marketplace yet, install it from HACS instead: search for **MeteoSwiss Forecast & Warnings**, select **Download** and restart Home Assistant.
 
 ### Manually
 
@@ -71,7 +74,7 @@ To change the stations or the warning setting later, open the entry and select *
 
 ### Switching from Swiss Weather
 
-If the integration [Swiss Weather](https://github.com/izacus/hass-swissweather) (`swissweather`) is set up, adding this integration first offers to **take over the existing entries**. Entity IDs, history, dashboards and automations stay as they are, and the Swiss Weather entries are removed afterwards. A repair issue then reminds you to remove Swiss Weather in HACS.
+If the integration [Swiss Weather](https://github.com/izacus/hass-swissweather) (`swissweather`) is set up, adding this integration first offers to **take over the existing entries**. Entity IDs, history, dashboards and automations stay as they are, and the Swiss Weather entries are removed afterwards. A repair issue then reminds you to uninstall Swiss Weather in the Marketplace (in HACS on Home Assistant 2026.10).
 
 Swiss Weather keeps all entities of an entry on one device. This integration splits them over a forecast, a weather station and a pollen device and gives those the area of the old device. The warning entities of Swiss Weather (`most_severe_weather_warning`, `weather_warning_2` and so on) are replaced by the warning entities described below; dashboards and automations that use them need updating.
 
@@ -153,7 +156,7 @@ content: |
   {% for link in state_attr(e, 'links') or [] %}[{{ link.text }}]({{ link.url }}) {% endfor %}
 ```
 
-For a more compact view, the [Mushroom](https://github.com/piitaya/lovelace-mushroom) template card (a custom card, installed from HACS) shows the warning with its colour, the validity and the start of the text:
+For a more compact view, the [Mushroom](https://github.com/piitaya/lovelace-mushroom) template card (a custom card from the Marketplace) shows the warning with its colour, the validity and the start of the text:
 
 ![Weather warnings in Mushroom template cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/mushroom-warnings.png)
 
@@ -233,7 +236,7 @@ logger:
 ## Removal
 
 1. Go to **Settings → Devices & services**, open **MeteoSwiss Forecast & Warnings** and delete each entry.
-2. If you installed with HACS, remove the integration in HACS. Otherwise delete the folder `custom_components/meteoswiss_forecast_warnings`.
+2. If you installed from the Marketplace, open its page there, select the three-dots menu and **Uninstall** (in HACS on Home Assistant 2026.10: **Remove**). Otherwise delete the folder `custom_components/meteoswiss_forecast_warnings`.
 3. Restart Home Assistant.
 
 ## Quality

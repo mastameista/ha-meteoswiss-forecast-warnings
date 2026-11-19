@@ -310,7 +310,7 @@
     },
     "legacy_integration_installed": {
       "title": "The old Swiss Weather integration is still installed",
-      "description": "All Swiss Weather entries now run in MeteoSwiss Forecast & Warnings. Remove Swiss Weather in HACS and restart Home Assistant. Kept installed, a HACS update could replace its files with ones that no longer fit together."
+      "description": "All Swiss Weather entries now run in MeteoSwiss Forecast & Warnings. Uninstall Swiss Weather in the Marketplace (in HACS on Home Assistant 2026.10) and restart Home Assistant. Kept installed, an update of Swiss Weather could replace its files with ones that no longer fit together."
     }
   },
   "exceptions": {

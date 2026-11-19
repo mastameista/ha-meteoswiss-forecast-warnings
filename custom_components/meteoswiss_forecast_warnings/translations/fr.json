@@ -310,7 +310,7 @@
     },
     "legacy_integration_installed": {
       "title": "L’ancienne intégration Swiss Weather est encore installée",
-      "description": "Toutes les entrées Swiss Weather fonctionnent désormais dans MeteoSwiss Forecast & Warnings. Supprimez Swiss Weather dans HACS et redémarrez Home Assistant. Si elle reste installée, une mise à jour HACS pourrait remplacer ses fichiers par des fichiers devenus incompatibles."
+      "description": "Toutes les entrées Swiss Weather fonctionnent désormais dans MeteoSwiss Forecast & Warnings. Désinstallez Swiss Weather dans le Marketplace (dans HACS sous Home Assistant 2026.10) et redémarrez Home Assistant. Si elle reste installée, une mise à jour de Swiss Weather pourrait remplacer ses fichiers par des fichiers devenus incompatibles."
     }
   },
   "exceptions": {
