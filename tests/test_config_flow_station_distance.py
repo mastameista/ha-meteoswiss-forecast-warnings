@@ -96,6 +96,13 @@ def test_unknown_place_falls_back_to_the_home_location():
     assert asyncio.run(_codes(flow)) == ["KLO", "WAE", "LUG"]
 
 
+def test_canton_in_the_station_name_is_shown_once():
+    flow = _flow(None, None)
+    buchs = WeatherStation("Buchs, SG", "PBU", 446, None, None, "SG")
+
+    assert flow.format_station_name_for_dropdown(buchs) == "Buchs (SG) · 446 m"
+
+
 def test_unavailable_forecast_points_fall_back_to_the_home_location():
     from custom_components.meteoswiss_forecast_warnings.forecast_points import (
         ForecastPointMetadataLoadError,

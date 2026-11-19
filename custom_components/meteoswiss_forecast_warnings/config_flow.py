@@ -52,6 +52,7 @@ from .naming import (
 from .station_lookup import (
     WeatherStation,
     find_station_by_code,
+    split_place_and_canton,
     station_display_name,
     async_load_pollen_station_list,
     async_load_weather_station_list,
@@ -488,7 +489,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         The altitude helps to pick a station at a similar height: a summit
         station a few kilometres away measures something else than the valley.
         """
-        parts = [f"{station.name} ({station.canton})"]
+        # Some names already end in the canton ("Buchs, SG"); show it once.
+        place, canton = split_place_and_canton(station.name)
+        parts = [f"{place} ({canton or station.canton})"]
         station_distance = self._get_distance_to_station(station)
         if station_distance is not None:
             kilometres = station_distance / 1000
