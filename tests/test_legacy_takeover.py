@@ -205,7 +205,8 @@ async def test_takeover_enables_as_many_warnings_as_swiss_weather_showed(
     slots = {
         e.unique_id: e.disabled_by is None
         for e in er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
-        if e.unique_id.endswith("_warning") or ".warning_" in e.unique_id
+        if e.unique_id.endswith("_warning")
+        or e.unique_id.removeprefix("800100.warning_").isdigit()
     }
     assert slots == {
         "800100.primary_warning": True,
