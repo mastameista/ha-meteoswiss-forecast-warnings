@@ -131,6 +131,45 @@ async def test_other_stations_need_a_weather_station(hass, meteoswiss_api):
     assert result["errors"] == {"base": "other_stations_need_weather_station"}
 
 
+async def test_reconfigure_checks_the_stored_forecast_point(hass, meteoswiss_api):
+    """Regression: a taken-over entry with postal code 1000 could not be reconfigured.
+
+    1000 Lausanne has no forecast point 100000; setup stores the point to
+    fetch instead. The connectivity check asked for 100000 and failed.
+    """
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="swissweather_1000",
+        version=2,
+        data={
+            CONF_POST_CODE: "1000",
+            "forecastPointId": "800100",
+            "forecastPointType": "2",
+            CONF_FORECAST_NAME: "Lausanne 25",
+            CONF_STATION_CODE: "SMA",
+            CONF_POLLEN_STATION_CODE: None,
+            CONF_WARNINGS_ENABLED: True,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    result = await _step(
+        hass,
+        result["flow_id"],
+        {
+            CONF_STATION_CODE: "TAE",
+            CONF_POLLEN_STATION_CODE: NO_POLLEN_STATION_OPTION,
+            CONF_WARNINGS_ENABLED: True,
+        },
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_STATION_CODE] == "TAE"
+    assert entry.data["forecastPointId"] == "800100"
+
+
 async def test_reconfigure_clears_a_group_station(hass, meteoswiss_api):
     entry = MockConfigEntry(
         domain=DOMAIN,

@@ -18,6 +18,7 @@ from homeassistant.helpers.selector import (
 from homeassistant.util.location import distance
 
 from .const import (
+    CONF_FORECAST_POINT_ID,
     CONF_FORECAST_POINT_TYPE,
     CONF_FORECAST_NAME,
     CONF_GROUP_STATION_CODES,
@@ -672,12 +673,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, resolved_data: dict[str, Any]
     ) -> dict[str, str]:
         """Validate the selected forecast point before persisting the entry."""
+        # Entries taken over from Swiss Weather can store a postal code without
+        # a forecast point of its own (1000 Lausanne); setup then stored the
+        # point to fetch instead, and the check has to use it as well.
+        forecast_point = resolved_data.get(CONF_FORECAST_POINT_ID)
+        if forecast_point is None and self.source == config_entries.SOURCE_RECONFIGURE:
+            forecast_point = self._get_reconfigure_entry().data.get(CONF_FORECAST_POINT_ID)
         try:
             client = MeteoClient(
                 async_get_clientsession(self.hass), self.hass.config.language
             )
             forecast = await client.async_get_forecast(
-                resolved_data[CONF_POST_CODE],
+                forecast_point or resolved_data[CONF_POST_CODE],
                 resolved_data.get(CONF_FORECAST_POINT_TYPE),
             )
         except MeteoSwissConnectionError:
