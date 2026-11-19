@@ -72,6 +72,12 @@ Go to **Settings → Devices & services → Add integration** and search for **M
 
 To change the stations or the warning setting later, open the entry and select **Reconfigure**. Entity IDs and history stay the same.
 
+### Measurements from other stations
+
+Not every station measures everything: many report no wind or no air pressure, and some wind and pressure stations measure no temperature. Under **Measurements from other stations** in the stations step, each group can come from another station: temperature (with humidity and dew point), precipitation, wind (with direction and gusts), air pressure, and sunshine (with global radiation). Only stations that measure a group are offered for it; leave a field empty to use the weather station.
+
+The sensors stay on the weather station device, and their entity IDs do not change. Each sensor names the station that measured it in its `station` attribute, and the weather entity lists the stations in its attribution. A group shows only what its station measures; a value that station does not report stays empty.
+
 ### Switching from Swiss Weather
 
 If the integration [Swiss Weather](https://github.com/izacus/hass-swissweather) (`swissweather`) is set up, adding this integration first offers to **take over the existing entries**. Entity IDs, history, dashboards and automations stay as they are, and the Swiss Weather entries are removed afterwards. A repair issue then reminds you to uninstall Swiss Weather in the Marketplace (in HACS on Home Assistant 2026.10).
@@ -97,7 +103,7 @@ Warning levels: 1 no or minimal danger, 2 moderate, 3 considerable, 4 high, 5 ve
 
 ### Weather station
 
-Temperature, precipitation (10 min), sunshine (10 min), global radiation, relative humidity, dew point, wind direction, wind speed, wind gusts (peak 1 s), air pressure at station level and at sea level (QFF). Of the two sea-level pressures, QFF is enabled where the station reports it and QNH otherwise; many stations report only QNH. The other one and the measurement time are disabled by default; enable them under the device if you need them.
+Temperature, precipitation (10 min), sunshine (10 min), global radiation, relative humidity, dew point, wind direction, wind speed, wind gusts (peak 1 s), air pressure at station level and at sea level (QFF). Attribute: `station`, the station that measured the value. Of the two sea-level pressures, QFF is enabled where the station reports it and QNH otherwise; many stations report only QNH. The other one and the measurement time are disabled by default; enable them under the device if you need them.
 
 ### Pollen station
 
