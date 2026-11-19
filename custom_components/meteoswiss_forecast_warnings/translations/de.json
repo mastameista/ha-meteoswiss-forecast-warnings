@@ -12,7 +12,8 @@
       "forecast_query_required": "Gib einen Suchbegriff für den Prognoseort ein.",
       "forecast_query_too_short": "Gib mindestens 2 Buchstaben oder eine exakte Postleitzahl bzw. Prognosepunkt-ID ein.",
       "forecast_query_metadata_unavailable": "Prognoseorte sind momentan nicht verfügbar. Versuche es gleich noch einmal.",
-      "forecast_query_not_found": "Es wurden keine passenden Prognoseorte gefunden."
+      "forecast_query_not_found": "Es wurden keine passenden Prognoseorte gefunden.",
+      "other_stations_need_weather_station": "Messwerte von anderen Stationen setzen eine Wetterstation voraus."
     },
     "step": {
       "user": {
@@ -37,7 +38,20 @@
           "pollenStationCode": "Pollenmessstation",
           "warningsEnabled": "Wetterwarnungs-Entitäten erstellen"
         },
-        "description": "Aktualisiere die Wetter- und Pollenstationen für den bestehenden Prognoseort."
+        "description": "Aktualisiere die Wetter- und Pollenstationen für den bestehenden Prognoseort.",
+        "sections": {
+          "other_stations": {
+            "name": "Messwerte von anderen Stationen",
+            "description": "Optional. Übernimm eine Gruppe von Messwerten von einer anderen Station, zum Beispiel wenn die Wetterstation keinen Wind oder Druck misst. Lass ein Feld leer, um die Wetterstation zu verwenden. Angeboten werden nur Stationen, die die Gruppe messen.",
+            "data": {
+              "temperatureStationCode": "Temperatur, Luftfeuchtigkeit und Taupunkt",
+              "precipitationStationCode": "Niederschlag",
+              "windStationCode": "Wind und Böen",
+              "pressureStationCode": "Luftdruck",
+              "sunshineStationCode": "Sonnenschein und Globalstrahlung"
+            }
+          }
+        }
       },
       "forecast_pick": {
         "title": "Prognoseort auswählen",
@@ -61,7 +75,20 @@
           "pollenStationCode": "Pollenmessstation",
           "warningsEnabled": "Wetterwarnungs-Entitäten erstellen"
         },
-        "description": "Wähle die Wetter- und Pollenstationen."
+        "description": "Wähle die Wetter- und Pollenstationen.",
+        "sections": {
+          "other_stations": {
+            "name": "Messwerte von anderen Stationen",
+            "description": "Optional. Übernimm eine Gruppe von Messwerten von einer anderen Station, zum Beispiel wenn die Wetterstation keinen Wind oder Druck misst. Lass ein Feld leer, um die Wetterstation zu verwenden. Angeboten werden nur Stationen, die die Gruppe messen.",
+            "data": {
+              "temperatureStationCode": "Temperatur, Luftfeuchtigkeit und Taupunkt",
+              "precipitationStationCode": "Niederschlag",
+              "windStationCode": "Wind und Böen",
+              "pressureStationCode": "Luftdruck",
+              "sunshineStationCode": "Sonnenschein und Globalstrahlung"
+            }
+          }
+        }
       },
       "legacy": {
         "title": "Bestehende Swiss-Weather-Einträge gefunden",

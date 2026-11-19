@@ -8,6 +8,7 @@ import logging
 
 from aiohttp import ClientError, ClientResponse, ClientSession
 
+from .naming import format_station_display_name
 from .pollen import PollenClient, PollenClientError
 from .request import REQUEST_TIMEOUT, async_get_with_retry
 
@@ -34,6 +35,13 @@ class WeatherStation:
     lat: float | None
     lng: float | None
     canton: str | None
+    # What the station measures, as named in the station list ("Temperature",
+    # "Wind", ...). Empty for pollen stations.
+    measurements: frozenset[str] = frozenset()
+
+    def measures(self, measurement: str) -> bool:
+        """Return whether the station measures the given quantity."""
+        return measurement in self.measurements
 
 
 def _int_or_none(val: str | None) -> int | None:
@@ -74,11 +82,13 @@ async def async_load_weather_station_list(
                 name = row.get("Station")
                 code = row.get("Abbr.")
                 measurements = row.get("Measurements")
+                # Precipitation stations are not in the current measurements
+                # (VQHA80), so they could never deliver a value.
                 if (
                     not name
                     or code is None
                     or measurements is None
-                    or "Temperature" not in measurements
+                    or row.get("Station type") == "Precipitation station"
                 ):
                     continue
 
@@ -90,6 +100,9 @@ async def async_load_weather_station_list(
                         _float_or_none(row.get("Latitude")),
                         _float_or_none(row.get("Longitude")),
                         row.get("Canton"),
+                        frozenset(
+                            part.strip() for part in measurements.split(",") if part.strip()
+                        ),
                     )
                 )
             return stations
@@ -170,6 +183,14 @@ def find_station_by_code(
     if code is None:
         return None
     return next((station for station in stations if station.code == code), None)
+
+
+def station_display_name(station: WeatherStation) -> str | None:
+    """Return a station's name as stored in entries, e.g. "Pfäffikon ZH"."""
+    place, canton = split_place_and_canton(station.name)
+    return format_station_display_name(
+        place, canton or station.canton, include_canton=True
+    )
 
 
 def split_place_and_canton(name: str | None) -> tuple[str | None, str | None]:

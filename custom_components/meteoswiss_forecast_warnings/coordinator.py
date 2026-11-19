@@ -16,6 +16,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .const import (
     CONF_FORECAST_POINT_ID,
     CONF_FORECAST_POINT_TYPE,
+    CONF_GROUP_STATION_CODES,
     CONF_POLLEN_STATION_CODE,
     CONF_POST_CODE,
     CONF_STATION_CODE,
@@ -23,6 +24,7 @@ from .const import (
 )
 from .meteo import (
     CurrentWeather,
+    apply_station_groups,
     MeteoClient,
     MeteoSwissConnectionError,
     MeteoSwissDataError,
@@ -139,6 +141,18 @@ class SwissWeatherDataCoordinator(DataUpdateCoordinator[WeatherData]):
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self._station_code = config_entry.data.get(CONF_STATION_CODE)
+        # Measurement groups taken from other stations; only with a weather
+        # station, whose sensors they replace.
+        self._group_stations: dict[str, str] = (
+            {
+                group: code
+                for group, key in CONF_GROUP_STATION_CODES.items()
+                if (code := config_entry.data.get(key))
+                and code != self._station_code
+            }
+            if self._station_code
+            else {}
+        )
         self._post_code = config_entry.data[CONF_POST_CODE]
         self._forecast_point = config_entry.data.get(
             CONF_FORECAST_POINT_ID, self._post_code
@@ -243,14 +257,18 @@ class SwissWeatherDataCoordinator(DataUpdateCoordinator[WeatherData]):
 
     async def _async_update_data(self) -> WeatherData:
         current_state: CurrentWeather | None = None
+        station_weather: dict[str, CurrentWeather | None] = {}
         if self._station_code is None:
             _LOGGER.debug("Station code not set, not loading current state.")
         else:
             _LOGGER.debug("Loading current weather state for %s", self._station_code)
             try:
-                current_state = await self._client.async_get_current_weather_for_station(
-                    self._station_code
+                station_weather = (
+                    await self._client.async_get_current_weather_for_stations(
+                        [self._station_code, *self._group_stations.values()]
+                    )
                 )
+                current_state = station_weather.get(self._station_code)
                 _LOGGER.debug("Current state: %s", current_state)
                 if current_state is None:
                     self._handle_current_station_failure("no station data returned")
@@ -295,6 +313,14 @@ class SwissWeatherDataCoordinator(DataUpdateCoordinator[WeatherData]):
                         None,
                         None,
                     )
+            if current_state is not None and station_weather and self._group_stations:
+                current_state = apply_station_groups(
+                    current_state,
+                    {
+                        group: station_weather.get(code)
+                        for group, code in self._group_stations.items()
+                    },
+                )
             snapshot = build_warning_snapshot(
                 None if current_forecast is None else current_forecast.warnings
             )

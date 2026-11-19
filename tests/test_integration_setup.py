@@ -22,6 +22,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.meteoswiss_forecast_warnings.const import (
     CONF_FORECAST_NAME,
     CONF_FORECAST_POINT_TYPE,
+    CONF_GROUP_STATION_CODES,
     CONF_POLLEN_STATION_CODE,
     CONF_POLLEN_STATION_NAME,
     CONF_POST_CODE,
@@ -112,6 +113,40 @@ async def test_station_without_qff_enables_qnh_instead(hass, meteoswiss_api):
     assert entities["800100.pressure_qff"].disabled_by is not None
     assert entities["800100.pressure_qnh"].disabled_by is None
     assert float(hass.states.get(entities["800100.pressure_qnh"].entity_id).state) == 1038.4
+
+
+async def test_wind_and_pressure_from_another_station(hass, meteoswiss_api):
+    """Schmerikon measures wind and pressure, Zürich / Fluntern the rest."""
+    entry = await _setup(
+        hass,
+        {
+            **FULL,
+            CONF_GROUP_STATION_CODES["wind"]: "SCM",
+            CONF_GROUP_STATION_CODES["pressure"]: "SCM",
+        },
+    )
+    # Setup fills in the station names from the station list.
+    assert entry.data["windStationName"] == "Schmerikon SG"
+
+    entities = _entities(hass, entry)
+
+    def state(key):
+        return hass.states.get(entities[f"800100.{key}"].entity_id)
+
+    assert float(state("wind_speed").state) == 16.2
+    assert state("wind_speed").attributes["station"] == "Schmerikon SG"
+    assert float(state("pressure_qnh").state) == 1000.9
+    assert float(state("temperature").state) == 16.0
+    assert state("temperature").attributes["station"] == "Zürich / Fluntern ZH"
+    # Schmerikon reports QNH but no QFF, so QNH is the enabled sea-level pressure.
+    assert entities["800100.pressure_qff"].disabled_by is not None
+    # All station sensors stay on the weather station device.
+    devices = {e.device_id for uid, e in entities.items() if uid.split(".")[1] in ("wind_speed", "temperature", "pressure_qnh")}
+    assert len(devices) == 1
+
+    weather = hass.states.get(entities["swiss_weather.800100"].entity_id)
+    assert weather.attributes["wind_speed"] == 16.2
+    assert "wind: Schmerikon SG" in weather.attributes["attribution"]
 
 
 async def test_weather_entity_serves_hourly_and_daily_forecasts(

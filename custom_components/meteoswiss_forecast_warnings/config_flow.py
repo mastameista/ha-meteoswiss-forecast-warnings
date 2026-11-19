@@ -7,7 +7,7 @@ from typing import Any
 import probatio
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
-from homeassistant.data_entry_flow import AbortFlow
+from homeassistant.data_entry_flow import AbortFlow, section
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     SelectOptionDict,
@@ -20,6 +20,8 @@ from homeassistant.util.location import distance
 from .const import (
     CONF_FORECAST_POINT_TYPE,
     CONF_FORECAST_NAME,
+    CONF_GROUP_STATION_CODES,
+    CONF_GROUP_STATION_NAMES,
     CONF_IMPORTED_FROM,
     CONF_POLLEN_STATION_CODE,
     CONF_POLLEN_STATION_NAME,
@@ -30,6 +32,7 @@ from .const import (
     CONF_WEATHER_WARNINGS_NUMBER,
     DOMAIN,
     LEGACY_DOMAIN,
+    STATION_GROUPS,
 )
 from .forecast_points import (
     ForecastPointMetadataLoadError,
@@ -47,9 +50,9 @@ from .naming import (
 from .station_lookup import (
     WeatherStation,
     find_station_by_code,
+    station_display_name,
     async_load_pollen_station_list,
     async_load_weather_station_list,
-    split_place_and_canton,
 )
 from .pollen import PollenClient
 
@@ -61,6 +64,18 @@ SEARCH_AGAIN_OPTION = "search_again"
 NO_POLLEN_STATION_OPTION = "no_pollen_station"
 NO_WEATHER_STATION_OPTION = "no_weather_station"
 MAX_FORECAST_POINT_RESULTS = 50
+# Collapsible part of the stations step with the measurement groups that can
+# come from another station than the weather station.
+OTHER_STATIONS_SECTION = "other_stations"
+# What a station has to measure (station list "Measurements") to be offered.
+MAIN_STATION_MEASUREMENT = "Temperature"
+GROUP_MEASUREMENTS = {
+    "temperature": "Temperature",
+    "precipitation": "Precipitation",
+    "wind": "Wind",
+    "pressure": "Pressure",
+    "sunshine": "Sunshine",
+}
 
 
 def _legacy_unique_id(entry: config_entries.ConfigEntry) -> str | None:
@@ -238,6 +253,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return await self._show_details_form(self._active_step_id())
 
+        if self._other_stations_without_weather_station(user_input):
+            return await self._show_details_form(
+                self._active_step_id(),
+                user_input=user_input,
+                errors={"base": "other_stations_need_weather_station"},
+            )
         resolved_data = await self._augment_entry_data(
             user_input, self._selected_forecast_point_id
         )
@@ -298,6 +319,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Show the second step with station and pollen options."""
         station_options = await self._get_weather_station_options()
         pollen_station_options = await self._get_pollen_station_options()
+        group_options = await self._get_group_station_options()
 
         existing_data: dict[str, Any] = {}
         if origin_step == "reconfigure":
@@ -348,11 +370,51 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): bool,
             }
         )
+        if user_input is not None:
+            group_defaults = dict(user_input.get(OTHER_STATIONS_SECTION) or {})
+        else:
+            group_defaults = {
+                CONF_GROUP_STATION_CODES[group]: existing_data[CONF_GROUP_STATION_CODES[group]]
+                for group in STATION_GROUPS
+                if existing_data.get(CONF_GROUP_STATION_CODES[group])
+            }
+        group_schema = probatio.Schema(
+            {
+                probatio.Optional(CONF_GROUP_STATION_CODES[group]): SelectSelector(
+                    SelectSelectorConfig(
+                        options=group_options[group],
+                        mode=SelectSelectorMode.DROPDOWN,
+                    )
+                )
+                for group in STATION_GROUPS
+            }
+        )
+        schema = probatio.Schema(
+            {
+                **schema.schema,
+                probatio.Optional(OTHER_STATIONS_SECTION): section(
+                    group_schema, {"collapsed": not group_defaults}
+                ),
+            }
+        )
+        schema = self.add_suggested_values_to_schema(
+            schema, {OTHER_STATIONS_SECTION: group_defaults}
+        )
         step_id = "reconfigure" if origin_step == "reconfigure" else "details"
         return self.async_show_form(
             step_id=step_id,
             data_schema=schema,
             errors=errors or {},
+        )
+
+    @staticmethod
+    def _other_stations_without_weather_station(user_input: dict[str, Any]) -> bool:
+        """Return whether groups were chosen without a weather station."""
+        station_code = user_input.get(CONF_STATION_CODE)
+        groups = user_input.get(OTHER_STATIONS_SECTION) or {}
+        return (
+            station_code in (None, NO_WEATHER_STATION_OPTION)
+            and any(groups.get(CONF_GROUP_STATION_CODES[group]) for group in STATION_GROUPS)
         )
 
     async def _handle_forecast_search(
@@ -424,7 +486,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _get_weather_station_options(self) -> list[SelectOptionDict]:
         """Load weather station options for the dropdown."""
-        stations = await self._async_get_weather_stations()
+        stations = [
+            station
+            for station in await self._async_get_weather_stations()
+            if station.measures(MAIN_STATION_MEASUREMENT)
+        ]
         if self.hass.config.latitude is not None and self.hass.config.longitude is not None:
             stations = sorted(stations, key=self._station_sort_key)
         return [
@@ -437,6 +503,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 for station in stations
             ],
         ]
+
+    async def _get_group_station_options(self) -> dict[str, list[SelectOptionDict]]:
+        """Load, per measurement group, the stations that measure it."""
+        stations = await self._async_get_weather_stations()
+        if self.hass.config.latitude is not None and self.hass.config.longitude is not None:
+            stations = sorted(stations, key=self._station_sort_key)
+        return {
+            group: [
+                SelectOptionDict(
+                    value=station.code,
+                    label=self.format_station_name_for_dropdown(station),
+                )
+                for station in stations
+                if station.measures(GROUP_MEASUREMENTS[group])
+            ]
+            for group in STATION_GROUPS
+        }
 
     async def _get_pollen_station_options(self) -> list[SelectOptionDict]:
         """Load pollen station options for the dropdown."""
@@ -544,17 +627,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             or str(post_code).strip()
         )
 
-        station_name, station_canton = split_place_and_canton(
-            station.name if station is not None else None
-        )
         resolved_data[CONF_STATION_NAME] = (
-            format_station_display_name(
-                station_name,
-                station_canton or (station.canton if station is not None else None),
-                include_canton=True,
-            )
-            if station is not None
-            else None
+            station_display_name(station) if station is not None else None
         )
         resolved_data[CONF_POLLEN_STATION_NAME] = (
             format_station_display_name(
@@ -571,6 +645,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 resolved_data.get(CONF_WARNINGS_ENABLED, True),
             )
         )
+        # Groups are stored flat like Swiss Weather does. A cleared group is
+        # stored as None so a reconfigure removes the station it had before.
+        groups = resolved_data.pop(OTHER_STATIONS_SECTION, None) or {}
+        for group in STATION_GROUPS:
+            code_key = CONF_GROUP_STATION_CODES[group]
+            group_station = (
+                find_station_by_code(weather_stations, groups.get(code_key))
+                if station_code is not None and groups.get(code_key) != station_code
+                else None
+            )
+            if group_station is None or not group_station.measures(
+                GROUP_MEASUREMENTS[group]
+            ):
+                group_station = None
+            resolved_data[code_key] = group_station.code if group_station else None
+            resolved_data[CONF_GROUP_STATION_NAMES[group]] = (
+                station_display_name(group_station) if group_station else None
+            )
         resolved_data.pop(CONF_WEATHER_WARNINGS_NUMBER, None)
         resolved_data.pop(CONF_FORECAST_QUERY, None)
         resolved_data.pop(CONF_FORECAST_POINT, None)

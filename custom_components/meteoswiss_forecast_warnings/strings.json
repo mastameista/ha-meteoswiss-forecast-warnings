@@ -12,7 +12,8 @@
       "forecast_query_required": "Enter a forecast place search term.",
       "forecast_query_too_short": "Enter at least 2 letters or an exact postal code / point ID.",
       "forecast_query_metadata_unavailable": "Forecast places are temporarily unavailable. Try again in a moment.",
-      "forecast_query_not_found": "No matching forecast places were found."
+      "forecast_query_not_found": "No matching forecast places were found.",
+      "other_stations_need_weather_station": "Measurements from other stations need a weather station."
     },
     "step": {
       "user": {
@@ -37,7 +38,20 @@
           "pollenStationCode": "Pollen measuring station",
           "warningsEnabled": "Create weather warning entities"
         },
-        "description": "Update the weather and pollen stations for the existing forecast place."
+        "description": "Update the weather and pollen stations for the existing forecast place.",
+        "sections": {
+          "other_stations": {
+            "name": "Measurements from other stations",
+            "description": "Optional. Take a group of measurements from another station, for example when the weather station does not measure wind or pressure. Leave a field empty to use the weather station. Only stations that measure the group are listed.",
+            "data": {
+              "temperatureStationCode": "Temperature, humidity and dew point",
+              "precipitationStationCode": "Precipitation",
+              "windStationCode": "Wind and gusts",
+              "pressureStationCode": "Air pressure",
+              "sunshineStationCode": "Sunshine and global radiation"
+            }
+          }
+        }
       },
       "forecast_pick": {
         "title": "Select forecast place",
@@ -61,7 +75,20 @@
           "pollenStationCode": "Pollen measuring station",
           "warningsEnabled": "Create weather warning entities"
         },
-        "description": "Choose the weather and pollen stations."
+        "description": "Choose the weather and pollen stations.",
+        "sections": {
+          "other_stations": {
+            "name": "Measurements from other stations",
+            "description": "Optional. Take a group of measurements from another station, for example when the weather station does not measure wind or pressure. Leave a field empty to use the weather station. Only stations that measure the group are listed.",
+            "data": {
+              "temperatureStationCode": "Temperature, humidity and dew point",
+              "precipitationStationCode": "Precipitation",
+              "windStationCode": "Wind and gusts",
+              "pressureStationCode": "Air pressure",
+              "sunshineStationCode": "Sunshine and global radiation"
+            }
+          }
+        }
       },
       "legacy": {
         "title": "Existing Swiss Weather entries found",

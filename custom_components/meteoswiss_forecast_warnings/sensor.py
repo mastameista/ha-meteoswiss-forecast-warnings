@@ -43,6 +43,7 @@ from .const import (
     WARNING_SLOTS,
 )
 from .entity import (
+    group_station_names,
     DEVICE_FORECAST,
     DEVICE_POLLEN_STATION,
     DEVICE_WEATHER_STATION,
@@ -114,6 +115,24 @@ SENSORS: list[SwissWeatherSensorEntry] = [
     SwissWeatherSensorEntry("pressure_qff", "pressure_qff", lambda weather: first_or_none(weather.pressureSeaLevel), UnitOfPressure.HPA, SensorDeviceClass.ATMOSPHERIC_PRESSURE, SensorStateClass.MEASUREMENT),
     SwissWeatherSensorEntry("pressure_qnh", "pressure_qnh", lambda weather: first_or_none(weather.pressureSeaLevelAtStandardAtmosphere), UnitOfPressure.HPA, SensorDeviceClass.ATMOSPHERIC_PRESSURE, SensorStateClass.MEASUREMENT, enabled_by_default=False),
 ]
+
+# Measurement group of each station sensor, for sensors whose value can come
+# from another station (see const.STATION_GROUPS). The measurement time
+# belongs to the weather station itself.
+SENSOR_STATION_GROUPS: dict[str, str] = {
+    "temperature": "temperature",
+    "humidity": "temperature",
+    "dew_point": "temperature",
+    "precipitation": "precipitation",
+    "wind_direction": "wind",
+    "wind_speed": "wind",
+    "gust_peak1s": "wind",
+    "pressure": "pressure",
+    "pressure_qff": "pressure",
+    "pressure_qnh": "pressure",
+    "sunshine": "sunshine",
+    "global_radiation": "sunshine",
+}
 
 POLLEN_SENSORS: list[SwissPollenSensorEntry] = [
     SwissPollenSensorEntry("pollen-time", "pollen_time", lambda pollen: pollen.timestamp, SensorDeviceClass.TIMESTAMP, EntityCategory.DIAGNOSTIC, enabled_by_default=False),
@@ -200,11 +219,15 @@ async def async_setup_entry(
         enabled_defaults = _sea_level_pressure_defaults(
             coordinator.data.current_weather if coordinator.data else None
         )
+        group_stations = group_station_names(config_entry.data)
         entities.extend(
             [
                 SwissWeatherSensor(
                     postCode,
-                    weather_station_name,
+                    group_stations.get(
+                        SENSOR_STATION_GROUPS.get(sensorEntry.key, ""),
+                        weather_station_name,
+                    ),
                     weather_device,
                     sensorEntry,
                     coordinator,
@@ -296,6 +319,9 @@ class SwissWeatherSensor(SwissWeatherEntity, SensorEntity):
         )
         self._sensor_entry = sensor_entry
         self._attr_unique_id = f"{post_code}.{sensor_entry.key}"
+        # The station that measures this value; differs from the device's
+        # station for measurement groups taken from another station.
+        self._attr_extra_state_attributes = {"station": station_name}
 
     @property
     def native_value(self) -> StateType | Decimal | datetime:

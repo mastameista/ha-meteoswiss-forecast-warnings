@@ -12,7 +12,8 @@
       "forecast_query_required": "Saisissez un terme de recherche pour le lieu de prévision.",
       "forecast_query_too_short": "Saisissez au moins 2 lettres ou un code postal / identifiant de point exact.",
       "forecast_query_metadata_unavailable": "Les lieux de prévision sont momentanément indisponibles. Réessayez dans un instant.",
-      "forecast_query_not_found": "Aucun lieu de prévision correspondant n'a été trouvé."
+      "forecast_query_not_found": "Aucun lieu de prévision correspondant n'a été trouvé.",
+      "other_stations_need_weather_station": "Les mesures d’autres stations nécessitent une station météo."
     },
     "step": {
       "user": {
@@ -37,7 +38,20 @@
           "pollenStationCode": "Station de mesure du pollen",
           "warningsEnabled": "Créer les entités d'avis de danger météo"
         },
-        "description": "Mettez à jour les stations météo et pollen du lieu de prévision existant."
+        "description": "Mettez à jour les stations météo et pollen du lieu de prévision existant.",
+        "sections": {
+          "other_stations": {
+            "name": "Mesures d’autres stations",
+            "description": "Facultatif. Reprenez un groupe de mesures d’une autre station, par exemple si la station météo ne mesure pas le vent ou la pression. Laissez un champ vide pour utiliser la station météo. Seules les stations qui mesurent le groupe sont proposées.",
+            "data": {
+              "temperatureStationCode": "Température, humidité et point de rosée",
+              "precipitationStationCode": "Précipitations",
+              "windStationCode": "Vent et rafales",
+              "pressureStationCode": "Pression atmosphérique",
+              "sunshineStationCode": "Ensoleillement et rayonnement global"
+            }
+          }
+        }
       },
       "forecast_pick": {
         "title": "Choisir le lieu de prévision",
@@ -61,7 +75,20 @@
           "pollenStationCode": "Station de mesure du pollen",
           "warningsEnabled": "Créer les entités d'avis de danger météo"
         },
-        "description": "Choisissez les stations météo et pollen."
+        "description": "Choisissez les stations météo et pollen.",
+        "sections": {
+          "other_stations": {
+            "name": "Mesures d’autres stations",
+            "description": "Facultatif. Reprenez un groupe de mesures d’une autre station, par exemple si la station météo ne mesure pas le vent ou la pression. Laissez un champ vide pour utiliser la station météo. Seules les stations qui mesurent le groupe sont proposées.",
+            "data": {
+              "temperatureStationCode": "Température, humidité et point de rosée",
+              "precipitationStationCode": "Précipitations",
+              "windStationCode": "Vent et rafales",
+              "pressureStationCode": "Pression atmosphérique",
+              "sunshineStationCode": "Ensoleillement et rayonnement global"
+            }
+          }
+        }
       },
       "legacy": {
         "title": "Entrées Swiss Weather existantes trouvées",

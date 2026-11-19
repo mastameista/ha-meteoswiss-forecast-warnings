@@ -22,6 +22,8 @@ from .const import (
     CONF_FORECAST_POINT_ID,
     CONF_FORECAST_POINT_TYPE,
     CONF_FORECAST_NAME,
+    CONF_GROUP_STATION_CODES,
+    CONF_GROUP_STATION_NAMES,
     CONF_IMPORTED_FROM,
     CONF_POLLEN_STATION_CODE,
     CONF_POLLEN_STATION_NAME,
@@ -63,6 +65,7 @@ from .station_lookup import (
     async_load_weather_station_list,
     find_station_by_code,
     split_place_and_canton,
+    station_display_name,
 )
 from .pollen import PollenClient
 
@@ -731,6 +734,16 @@ async def _async_ensure_entry_names(
             )
             if entry.data.get(CONF_STATION_NAME) != formatted_station_name:
                 data_updates[CONF_STATION_NAME] = formatted_station_name
+
+    for group, code_key in CONF_GROUP_STATION_CODES.items():
+        if not entry.data.get(code_key):
+            continue
+        station = find_station_by_code(metadata.weather_stations, entry.data[code_key])
+        if station is None:
+            continue
+        group_station_name = station_display_name(station)
+        if entry.data.get(CONF_GROUP_STATION_NAMES[group]) != group_station_name:
+            data_updates[CONF_GROUP_STATION_NAMES[group]] = group_station_name
 
     if entry.data.get(CONF_POLLEN_STATION_CODE):
         station = find_station_by_code(

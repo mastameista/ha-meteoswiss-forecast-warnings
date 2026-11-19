@@ -40,8 +40,8 @@ def test_weather_coordinator_fails_when_forecast_missing(monkeypatch):
             self.session = session
             self.language = language
 
-        async def async_get_current_weather_for_station(self, station_code):
-            return None
+        async def async_get_current_weather_for_stations(self, station_codes):
+            return {station_codes[0]: None}
 
         async def async_get_forecast(self, post_code, forecast_point_type):
             return None
@@ -103,7 +103,7 @@ def test_weather_coordinator_uses_forecast_current_as_fallback(monkeypatch):
             self.session = session
             self.language = language
 
-        async def async_get_current_weather_for_station(self, station_code):
+        async def async_get_current_weather_for_stations(self, station_codes):
             raise RuntimeError("weather station offline")
 
         async def async_get_forecast(self, post_code, forecast_point_type):
@@ -143,12 +143,11 @@ def test_weather_coordinator_logs_station_outage_once_and_recovery(monkeypatch, 
             self.session = session
             self.language = language
 
-        async def async_get_current_weather_for_station(self, station_code):
-            del station_code
+        async def async_get_current_weather_for_stations(self, station_codes):
             result = station_results.pop(0)
             if isinstance(result, Exception):
                 raise result
-            return result
+            return {station_codes[0]: result}
 
         async def async_get_forecast(self, post_code, forecast_point_type):
             del post_code, forecast_point_type
@@ -197,8 +196,8 @@ def test_weather_coordinator_classifies_forecast_connection_errors(monkeypatch):
             self.session = session
             self.language = language
 
-        async def async_get_current_weather_for_station(self, station_code):
-            return None
+        async def async_get_current_weather_for_stations(self, station_codes):
+            return {station_codes[0]: None}
 
         async def async_get_forecast(self, post_code, forecast_point_type):
             raise MeteoSwissConnectionError("timeout")
@@ -252,8 +251,8 @@ def test_weather_coordinator_classifies_invalid_warning_payload(monkeypatch):
             self.session = session
             self.language = language
 
-        async def async_get_current_weather_for_station(self, station_code):
-            return None
+        async def async_get_current_weather_for_stations(self, station_codes):
+            return {station_codes[0]: None}
 
         async def async_get_forecast(self, post_code, forecast_point_type):
             raise MeteoSwissDataError("Failed to parse MeteoSwiss warnings payload")

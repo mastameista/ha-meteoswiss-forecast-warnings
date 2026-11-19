@@ -17,7 +17,12 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import SwissWeatherDataCoordinator
 from .const import CONF_FORECAST_NAME, CONF_POST_CODE, CONF_STATION_NAME
-from .entity import DEVICE_FORECAST, SwissWeatherEntity, build_device_info
+from .entity import (
+    DEVICE_FORECAST,
+    SwissWeatherEntity,
+    build_device_info,
+    group_station_names,
+)
 from .meteo import (
     CurrentWeather,
     FloatValue,
@@ -65,9 +70,14 @@ class SwissWeather(SwissWeatherEntity, WeatherEntity):
         self._weather_station_name = config_entry.data.get(CONF_STATION_NAME)
         self._attr_name = None
         if self._weather_station_name:
+            groups = ", ".join(
+                f"{group}: {name}"
+                for group, name in group_station_names(config_entry.data).items()
+            )
             self._attr_attribution = (
                 f"MeteoSwiss. Forecast: {forecast_name}. "
-                f"Current weather: {self._weather_station_name}."
+                f"Current weather: {self._weather_station_name}"
+                f"{f' ({groups})' if groups else ''}."
             )
         else:
             self._attr_attribution = (

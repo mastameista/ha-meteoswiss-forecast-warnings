@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import (
+    CONF_GROUP_STATION_CODES,
+    CONF_GROUP_STATION_NAMES,
+    CONF_STATION_CODE,
+    DOMAIN,
+)
 from .coordinator import SwissPollenDataCoordinator, SwissWeatherDataCoordinator
 
 ATTRIBUTION = "Source: MeteoSwiss"
@@ -20,6 +28,23 @@ DEVICE_POLLEN_STATION = "pollen-station"
 def device_identifier(entry_id: str, kind: str) -> tuple[str, str]:
     """Return the registry identifier of one of an entry's devices."""
     return (DOMAIN, f"{entry_id}-{kind}")
+
+
+def group_station_names(data: Mapping[str, Any]) -> dict[str, str]:
+    """Return the station name of each measurement group from another station.
+
+    Groups only apply with a weather station; a group set to the weather
+    station itself is no different from not setting it.
+    """
+    station_code = data.get(CONF_STATION_CODE)
+    if not station_code:
+        return {}
+    names: dict[str, str] = {}
+    for group, key in CONF_GROUP_STATION_CODES.items():
+        code = data.get(key)
+        if code and code != station_code:
+            names[group] = data.get(CONF_GROUP_STATION_NAMES[group]) or code
+    return names
 
 
 def build_device_info(entry_id: str, kind: str, name: str | None) -> DeviceInfo:

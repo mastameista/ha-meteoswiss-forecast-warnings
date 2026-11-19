@@ -12,7 +12,8 @@
       "forecast_query_required": "Inserisci un termine di ricerca per la località di previsione.",
       "forecast_query_too_short": "Inserisci almeno 2 lettere oppure un codice postale / ID del punto esatto.",
       "forecast_query_metadata_unavailable": "Le località di previsione non sono momentaneamente disponibili. Riprova tra poco.",
-      "forecast_query_not_found": "Non è stata trovata nessuna località di previsione corrispondente."
+      "forecast_query_not_found": "Non è stata trovata nessuna località di previsione corrispondente.",
+      "other_stations_need_weather_station": "Le misure da altre stazioni richiedono una stazione meteo."
     },
     "step": {
       "user": {
@@ -37,7 +38,20 @@
           "pollenStationCode": "Stazione di misurazione dei pollini",
           "warningsEnabled": "Crea le entità delle allerte meteo"
         },
-        "description": "Aggiorna le stazioni meteo e dei pollini per la località di previsione esistente."
+        "description": "Aggiorna le stazioni meteo e dei pollini per la località di previsione esistente.",
+        "sections": {
+          "other_stations": {
+            "name": "Misure da altre stazioni",
+            "description": "Facoltativo. Riprendi un gruppo di misure da un’altra stazione, ad esempio se la stazione meteo non misura il vento o la pressione. Lascia un campo vuoto per usare la stazione meteo. Sono proposte solo le stazioni che misurano il gruppo.",
+            "data": {
+              "temperatureStationCode": "Temperatura, umidità e punto di rugiada",
+              "precipitationStationCode": "Precipitazioni",
+              "windStationCode": "Vento e raffiche",
+              "pressureStationCode": "Pressione atmosferica",
+              "sunshineStationCode": "Soleggiamento e radiazione globale"
+            }
+          }
+        }
       },
       "forecast_pick": {
         "title": "Scegli la località di previsione",
@@ -61,7 +75,20 @@
           "pollenStationCode": "Stazione di misurazione dei pollini",
           "warningsEnabled": "Crea le entità delle allerte meteo"
         },
-        "description": "Scegli le stazioni meteo e dei pollini."
+        "description": "Scegli le stazioni meteo e dei pollini.",
+        "sections": {
+          "other_stations": {
+            "name": "Misure da altre stazioni",
+            "description": "Facoltativo. Riprendi un gruppo di misure da un’altra stazione, ad esempio se la stazione meteo non misura il vento o la pressione. Lascia un campo vuoto per usare la stazione meteo. Sono proposte solo le stazioni che misurano il gruppo.",
+            "data": {
+              "temperatureStationCode": "Temperatura, umidità e punto di rugiada",
+              "precipitationStationCode": "Precipitazioni",
+              "windStationCode": "Vento e raffiche",
+              "pressureStationCode": "Pressione atmosferica",
+              "sunshineStationCode": "Soleggiamento e radiazione globale"
+            }
+          }
+        }
       },
       "legacy": {
         "title": "Trovate voci Swiss Weather esistenti",

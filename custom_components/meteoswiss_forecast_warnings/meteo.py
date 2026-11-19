@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import csv
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from enum import IntEnum
 import hashlib
@@ -167,6 +167,40 @@ class CurrentWeather:
     pressureStationLevel: FloatValue | None
     pressureSeaLevel: FloatValue | None
     pressureSeaLevelAtStandardAtmosphere: FloatValue | None
+
+
+# Fields of CurrentWeather that a station group takes from its own station.
+STATION_GROUP_FIELDS: dict[str, tuple[str, ...]] = {
+    "temperature": ("airTemperature", "relativeHumidity", "dewPoint"),
+    "precipitation": ("precipitation",),
+    "wind": ("windDirection", "windSpeed", "gustPeak1s"),
+    "pressure": (
+        "pressureStationLevel",
+        "pressureSeaLevel",
+        "pressureSeaLevelAtStandardAtmosphere",
+    ),
+    "sunshine": ("sunshine", "globalRadiation"),
+}
+
+
+def apply_station_groups(
+    current: CurrentWeather, group_weather: dict[str, CurrentWeather | None]
+) -> CurrentWeather:
+    """Take the fields of each group from the station chosen for it.
+
+    A group station without a value (or without a row at all) gives no value:
+    the group's measurements come from that station only, so a value is never
+    attributed to a station that did not measure it.
+    """
+    updates: dict[str, FloatValue] = {}
+    for group, weather in group_weather.items():
+        for field_name in STATION_GROUP_FIELDS[group]:
+            value = None if weather is None else getattr(weather, field_name)
+            if value is None:
+                own = getattr(current, field_name)
+                value = (None, own[1] if own is not None else None)
+            updates[field_name] = value
+    return replace(current, **updates)  # type: ignore[arg-type]
 
 
 @dataclass
@@ -413,6 +447,20 @@ class MeteoClient:
             logger.warning("Couldn't find data for station %s", station)
             return None
         return self._get_current_data_for_row(data)
+
+    async def async_get_current_weather_for_stations(
+        self, stations: list[str]
+    ) -> dict[str, CurrentWeather | None]:
+        """Return the current weather of several stations from one download."""
+        data = await self._async_get_csv_dictionary_for_url(CURRENT_CONDITION_URL)
+        rows = {
+            row.get("Station/Location", "").casefold(): row for row in data or []
+        }
+        weather: dict[str, CurrentWeather | None] = {}
+        for station in stations:
+            row = rows.get(station.casefold())
+            weather[station] = None if row is None else self._get_current_data_for_row(row)
+        return weather
 
     def _get_current_data_for_row(self, csv_row: dict[str, str]) -> CurrentWeather | None:
         timestamp_raw = csv_row.get("Date")

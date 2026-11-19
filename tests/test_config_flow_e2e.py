@@ -19,6 +19,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.meteoswiss_forecast_warnings.config_flow import (
     NO_POLLEN_STATION_OPTION,
     NO_WEATHER_STATION_OPTION,
+    OTHER_STATIONS_SECTION,
     SEARCH_AGAIN_OPTION,
 )
 from custom_components.meteoswiss_forecast_warnings.const import (
@@ -69,6 +70,103 @@ async def test_full_flow_creates_an_entry(hass, meteoswiss_api):
     assert data[CONF_POLLEN_STATION_CODE] == "PZH"
     assert data[CONF_FORECAST_NAME]
     assert result["result"].unique_id == "swissweather_800100"
+
+
+async def test_measurements_from_other_stations(hass, meteoswiss_api):
+    result = await _start(hass)
+    result = await _step(hass, result["flow_id"], {QUERY: "8001"})
+    result = await _step(hass, result["flow_id"], {POINT: "800100"})
+
+    # Only stations that measure a group are offered for it.
+    section = result["data_schema"].schema[OTHER_STATIONS_SECTION]
+    options = {
+        str(key): {option["value"] for option in selector.config["options"]}
+        for key, selector in section.schema.schema.items()
+    }
+    assert "SCM" in options["windStationCode"]
+    assert "SCM" not in options["temperatureStationCode"]
+    assert "AFI" not in options["precipitationStationCode"]
+
+    result = await _step(
+        hass,
+        result["flow_id"],
+        {
+            CONF_STATION_CODE: "SMA",
+            CONF_POLLEN_STATION_CODE: NO_POLLEN_STATION_OPTION,
+            CONF_WARNINGS_ENABLED: True,
+            OTHER_STATIONS_SECTION: {
+                "windStationCode": "SCM",
+                # The weather station itself is no other station.
+                "temperatureStationCode": "SMA",
+            },
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    data = result["data"]
+    assert data["windStationCode"] == "SCM"
+    assert data["windStationName"] == "Schmerikon SG"
+    assert data["temperatureStationCode"] is None
+    assert data["pressureStationCode"] is None
+    assert OTHER_STATIONS_SECTION not in data
+
+
+async def test_other_stations_need_a_weather_station(hass, meteoswiss_api):
+    result = await _start(hass)
+    result = await _step(hass, result["flow_id"], {QUERY: "8001"})
+    result = await _step(hass, result["flow_id"], {POINT: "800100"})
+
+    result = await _step(
+        hass,
+        result["flow_id"],
+        {
+            CONF_STATION_CODE: NO_WEATHER_STATION_OPTION,
+            CONF_POLLEN_STATION_CODE: NO_POLLEN_STATION_OPTION,
+            CONF_WARNINGS_ENABLED: True,
+            OTHER_STATIONS_SECTION: {"windStationCode": "SCM"},
+        },
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "other_stations_need_weather_station"}
+
+
+async def test_reconfigure_clears_a_group_station(hass, meteoswiss_api):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="swissweather_800100",
+        version=2,
+        data={
+            CONF_POST_CODE: "800100",
+            "forecastPointType": "2",
+            CONF_FORECAST_NAME: "Zürich",
+            CONF_STATION_CODE: "SMA",
+            CONF_POLLEN_STATION_CODE: None,
+            CONF_WARNINGS_ENABLED: True,
+            "windStationCode": "SCM",
+            "windStationName": "Schmerikon SG",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    # The section opens when a group is set.
+    assert result["data_schema"].schema[OTHER_STATIONS_SECTION].options["collapsed"] is False
+
+    result = await _step(
+        hass,
+        result["flow_id"],
+        {
+            CONF_STATION_CODE: "SMA",
+            CONF_POLLEN_STATION_CODE: NO_POLLEN_STATION_OPTION,
+            CONF_WARNINGS_ENABLED: True,
+            OTHER_STATIONS_SECTION: {},
+        },
+    )
+
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data["windStationCode"] is None
+    assert entry.data["windStationName"] is None
 
 
 async def test_flow_without_stations_stores_none(hass, meteoswiss_api):

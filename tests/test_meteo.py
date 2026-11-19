@@ -122,8 +122,9 @@ class TestMeteoClient(unittest.IsolatedAsyncioTestCase):
 
         stations = await self.client.async_get_current_weather_for_all_stations()
         self.assertIsNotNone(stations)
-        self.assertEqual(len(stations), 3)
+        self.assertEqual(len(stations), 4)
         station_codes = [s.station for s in stations]
+        self.assertIn("SCM", station_codes)
         self.assertIn("TAE", station_codes)
         self.assertIn("JUN", station_codes)
         self.assertIn("SMA", station_codes)

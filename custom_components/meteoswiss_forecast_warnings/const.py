@@ -24,3 +24,10 @@ DEFAULT_ENABLED_WARNING_SLOTS = 3
 CONF_FORECAST_NAME = "forecastName"
 CONF_STATION_NAME = "stationName"
 CONF_POLLEN_STATION_NAME = "pollenStationName"
+
+# Groups of measurements that can come from another station than the weather
+# station, e.g. wind from a nearby station that measures it. The keys match
+# Swiss Weather, so its entries keep their choice when taken over.
+STATION_GROUPS = ("temperature", "precipitation", "wind", "pressure", "sunshine")
+CONF_GROUP_STATION_CODES = {group: f"{group}StationCode" for group in STATION_GROUPS}
+CONF_GROUP_STATION_NAMES = {group: f"{group}StationName" for group in STATION_GROUPS}
