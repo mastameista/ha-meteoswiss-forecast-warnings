@@ -12,7 +12,7 @@ from homeassistant.const import (
     UnitOfSpeed,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import SwissWeatherDataCoordinator
@@ -125,6 +125,18 @@ class SwissWeather(SwissWeatherEntity, WeatherEntity):
         return None
 
     @property
+    def native_wind_gust_speed(self) -> float | None:
+        if self._current_state is not None:
+            return self.value_or_none(self._current_state.gustPeak1s)
+        return None
+
+    @property
+    def native_dew_point(self) -> float | None:
+        if self._current_state is not None:
+            return self.value_or_none(self._current_state.dewPoint)
+        return None
+
+    @property
     def native_wind_speed_unit(self) -> str | None:
         return UnitOfSpeed.KILOMETERS_PER_HOUR
 
@@ -161,6 +173,17 @@ class SwissWeather(SwissWeatherEntity, WeatherEntity):
     @property
     def supported_features(self) -> int | None:
         return WeatherEntityFeature.FORECAST_HOURLY | WeatherEntityFeature.FORECAST_DAILY
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        super()._handle_coordinator_update()
+        # Cards subscribed to the forecast (weather/subscribe_forecast) are
+        # only sent new forecasts when the listeners are updated; without
+        # this, an open dashboard keeps the forecast it loaded with.
+        if (entry := self.coordinator.config_entry) is not None:
+            entry.async_create_task(self.hass, self.async_update_listeners(None))
+        else:
+            self.hass.async_create_task(self.async_update_listeners(None))
 
     async def async_forecast_daily(self) -> list[Forecast] | None:
         _LOGGER.debug("Retrieving daily forecast.")

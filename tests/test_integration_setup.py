@@ -7,6 +7,8 @@ pytest-homeassistant-custom-component (Linux) and runs in CI.
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 pytest.importorskip("pytest_homeassistant_custom_component")
@@ -84,7 +86,11 @@ async def test_full_setup_creates_three_devices_and_live_entities(hass, meteoswi
 
     # Values come from the recorded payloads.
     assert float(states["800100.temperature"].state) == 16.0
-    assert states["swiss_weather.800100"].domain == "weather"
+    weather = states["swiss_weather.800100"]
+    assert weather.domain == "weather"
+    # Current gust and dew point come from the station row (fu3010z1, tde200s0).
+    assert weather.attributes["wind_gust_speed"] == 7.6
+    assert weather.attributes["dew_point"] == 12.1
     assert "800100.has_active_warnings" in entities
     assert "pollen-800100.birch" in entities
 
@@ -121,6 +127,42 @@ async def test_weather_entity_serves_hourly_and_daily_forecasts(
         forecast = response[weather_id]["forecast"]
         assert forecast, kind
         assert "temperature" in forecast[0], kind
+
+
+async def test_forecast_subscribers_receive_updated_forecasts(
+    hass, meteoswiss_api, freezer, hass_ws_client
+):
+    """Open forecast cards must get new forecasts, not keep the first one."""
+    freezer.move_to("2026-10-03T22:30:00+00:00")
+    entry = await _setup(hass, FULL)
+    weather_id = _entities(hass, entry)["swiss_weather.800100"].entity_id
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(
+        {
+            "type": "weather/subscribe_forecast",
+            "forecast_type": "daily",
+            "entity_id": weather_id,
+        }
+    )
+    assert (await client.receive_json())["success"]
+    first = (await client.receive_json())["event"]["forecast"]
+    assert len(first) > 1
+
+    coordinator = entry.runtime_data.weather_coordinator
+    forecast = coordinator.data.forecast
+    coordinator.async_set_updated_data(
+        dataclasses.replace(
+            coordinator.data,
+            forecast=dataclasses.replace(
+                forecast, dailyForecast=forecast.dailyForecast[:1]
+            ),
+        )
+    )
+    await hass.async_block_till_done()
+
+    updated = (await client.receive_json())["event"]["forecast"]
+    assert updated == first[:1]
 
 
 async def test_setup_without_optional_stations_has_only_the_forecast_device(

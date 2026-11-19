@@ -52,6 +52,8 @@ def test_no_data_yet_reports_nothing():
     assert entity.humidity is None
     assert entity.wind_bearing is None
     assert entity.native_pressure is None
+    assert entity.native_wind_gust_speed is None
+    assert entity.native_dew_point is None
     assert asyncio.run(entity.async_forecast_daily()) is None
     assert asyncio.run(entity.async_forecast_hourly()) is None
 
@@ -63,6 +65,8 @@ def test_without_a_station_the_forecast_supplies_temperature_and_condition():
     assert entity.condition == "sunny"
     # Station-only measurements stay empty instead of being guessed.
     assert entity.native_wind_speed is None
+    assert entity.native_wind_gust_speed is None
+    assert entity.native_dew_point is None
     assert entity.humidity is None
 
 
