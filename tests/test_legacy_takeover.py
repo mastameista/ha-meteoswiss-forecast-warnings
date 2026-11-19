@@ -41,6 +41,7 @@ from custom_components.meteoswiss_forecast_warnings.const import (
     CONF_STATION_CODE,
     CONF_STATION_NAME,
     CONF_WARNINGS_ENABLED,
+    CONF_WEATHER_WARNINGS_NUMBER,
     DOMAIN,
     LEGACY_DOMAIN,
 )
@@ -68,7 +69,9 @@ def legacy_config_flow():
         yield
 
 
-async def _legacy_installation(hass: HomeAssistant) -> MockConfigEntry:
+async def _legacy_installation(
+    hass: HomeAssistant, data: dict | None = None
+) -> MockConfigEntry:
     """A loaded swissweather entry with registered devices and entities."""
     mock_integration(
         hass,
@@ -85,7 +88,7 @@ async def _legacy_installation(hass: HomeAssistant) -> MockConfigEntry:
         unique_id="swissweather_800100",
         version=2,
         title="MeteoSwiss Zürich / Zürich / Fluntern ZH",
-        data=LEGACY_DATA,
+        data=LEGACY_DATA if data is None else data,
     )
     legacy.add_to_hass(hass)
     assert await hass.config_entries.async_setup(legacy.entry_id)
@@ -178,6 +181,38 @@ async def test_takeover_keeps_entity_ids_devices_areas_and_names(hass, meteoswis
     assert forecast.identifiers == {(DOMAIN, f"{entry.entry_id}-forecast")}
     assert forecast.name_by_user == "Wetter daheim"
     assert forecast.area_id is not None
+
+
+async def test_takeover_enables_as_many_warnings_as_swiss_weather_showed(
+    hass, meteoswiss_api
+):
+    """Swiss Weather showed up to 10 warnings; the taken-over entry keeps them."""
+    data = {key: value for key, value in LEGACY_DATA.items() if key != CONF_WARNINGS_ENABLED}
+    await _legacy_installation(hass, {**data, CONF_WEATHER_WARNINGS_NUMBER: 6})
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "take_over_legacy"}
+    )
+    await hass.async_block_till_done()
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.data[CONF_WARNINGS_ENABLED] is True
+    assert CONF_WEATHER_WARNINGS_NUMBER not in entry.data
+    slots = {
+        e.unique_id: e.disabled_by is None
+        for e in er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
+        if e.unique_id.endswith("_warning") or ".warning_" in e.unique_id
+    }
+    assert slots == {
+        "800100.primary_warning": True,
+        "800100.secondary_warning": True,
+        "800100.tertiary_warning": True,
+        **{f"800100.warning_{rank}": rank <= 6 for rank in range(4, 11)},
+    }
 
 
 async def test_menu_is_skipped_when_everything_was_taken_over(hass, meteoswiss_api):

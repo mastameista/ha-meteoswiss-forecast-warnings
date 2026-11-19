@@ -248,6 +248,46 @@
           }
         }
       },
+      "ranked_warning": {
+        "name": "Allerta meteo {rank}",
+        "state": {
+          "wind": "Vento",
+          "thunderstorms": "Temporali",
+          "rain": "Pioggia",
+          "snow": "Neve",
+          "slippery_roads": "Strade sdrucciolevoli",
+          "frost": "Gelo",
+          "thaw": "Disgelo",
+          "heat_waves": "Canicola",
+          "avalanches": "Valanghe",
+          "earthquakes": "Terremoti",
+          "forest_fires": "Incendi boschivi",
+          "flood": "Piene",
+          "drought": "Siccità",
+          "other": "Altra allerta",
+          "none": "Nessuna allerta"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Vento",
+              "thunderstorms": "Temporali",
+              "rain": "Pioggia",
+              "snow": "Neve",
+              "slippery_roads": "Strade sdrucciolevoli",
+              "frost": "Gelo",
+              "thaw": "Disgelo",
+              "heat_waves": "Canicola",
+              "avalanches": "Valanghe",
+              "earthquakes": "Terremoti",
+              "forest_fires": "Incendi boschivi",
+              "flood": "Piene",
+              "drought": "Siccità",
+              "other": "Altra allerta"
+            }
+          }
+        }
+      },
       "pollen_time": {
         "name": "Ora della misurazione dei pollini"
       },

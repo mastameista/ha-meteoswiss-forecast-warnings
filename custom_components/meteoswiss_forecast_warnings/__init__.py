@@ -30,8 +30,10 @@ from .const import (
     CONF_STATION_NAME,
     CONF_WARNINGS_ENABLED,
     CONF_WEATHER_WARNINGS_NUMBER,
+    DEFAULT_ENABLED_WARNING_SLOTS,
     DOMAIN,
     LEGACY_DOMAIN,
+    WARNING_SLOTS,
 )
 from .coordinator import SwissPollenDataCoordinator, SwissWeatherDataCoordinator
 from .entity import (
@@ -89,6 +91,7 @@ _WARNING_ENTITY_SUFFIXES = (
     "primary_warning",
     "secondary_warning",
     "tertiary_warning",
+    *(f"warning_{rank}" for rank in range(4, WARNING_SLOTS + 1)),
 )
 ISSUE_ID_MISSING_FORECAST_POINT = "missing_forecast_point"
 ISSUE_ID_MISSING_WEATHER_STATION = "missing_weather_station"
@@ -103,6 +106,8 @@ class SwissWeatherRuntimeData:
 
     weather_coordinator: SwissWeatherDataCoordinator
     pollen_coordinator: SwissPollenDataCoordinator | None
+    # Warning sensors enabled when first registered; see _enabled_warning_slots.
+    enabled_warning_slots: int = DEFAULT_ENABLED_WARNING_SLOTS
 
 
 @dataclass
@@ -599,8 +604,23 @@ async def _async_sync_legacy_integration_issue(hass: HomeAssistant) -> None:
         ir.async_delete_issue(hass, DOMAIN, ISSUE_ID_LEGACY_INTEGRATION)
 
 
+def _enabled_warning_slots(entry: ConfigEntry) -> int:
+    """Return how many ranked warning sensors to enable when registering them.
+
+    Swiss Weather entries store how many warnings were shown; the setting is
+    migrated away on the first setup, so it is read before that. Only sensors
+    registered for the first time use it: a taken-over entry gets as many
+    warnings as before, and existing choices stay as the user left them.
+    """
+    shown = entry.data.get(CONF_WEATHER_WARNINGS_NUMBER)
+    if shown is None:
+        return DEFAULT_ENABLED_WARNING_SLOTS
+    return min(max(int(shown), DEFAULT_ENABLED_WARNING_SLOTS), WARNING_SLOTS)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a forecast place from a config entry."""
+    enabled_warning_slots = _enabled_warning_slots(entry)
     if CONF_IMPORTED_FROM in entry.data:
         entry = await _async_take_over_legacy_entry(hass, entry)
     await _async_sync_legacy_integration_issue(hass)
@@ -624,6 +644,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.runtime_data = SwissWeatherRuntimeData(
         weather_coordinator=coordinator,
         pollen_coordinator=pollen_coordinator,
+        enabled_warning_slots=enabled_warning_slots,
     )
     _LOGGER.debug("Bootstrapped entry %s", entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

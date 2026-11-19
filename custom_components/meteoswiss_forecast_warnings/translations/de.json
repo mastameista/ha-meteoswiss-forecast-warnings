@@ -248,6 +248,46 @@
           }
         }
       },
+      "ranked_warning": {
+        "name": "Wetterwarnung {rank}",
+        "state": {
+          "wind": "Wind",
+          "thunderstorms": "Gewitter",
+          "rain": "Regen",
+          "snow": "Schnee",
+          "slippery_roads": "Glätte",
+          "frost": "Frost",
+          "thaw": "Tauwetter",
+          "heat_waves": "Hitzewelle",
+          "avalanches": "Lawinen",
+          "earthquakes": "Erdbeben",
+          "forest_fires": "Waldbrand",
+          "flood": "Hochwasser",
+          "drought": "Trockenheit",
+          "other": "Andere Warnung",
+          "none": "Keine Warnung"
+        },
+        "state_attributes": {
+          "warning_type": {
+            "state": {
+              "wind": "Wind",
+              "thunderstorms": "Gewitter",
+              "rain": "Regen",
+              "snow": "Schnee",
+              "slippery_roads": "Glätte",
+              "frost": "Frost",
+              "thaw": "Tauwetter",
+              "heat_waves": "Hitzewelle",
+              "avalanches": "Lawinen",
+              "earthquakes": "Erdbeben",
+              "forest_fires": "Waldbrand",
+              "flood": "Hochwasser",
+              "drought": "Trockenheit",
+              "other": "Andere Warnung"
+            }
+          }
+        }
+      },
       "pollen_time": {
         "name": "Pollenzeit"
       },

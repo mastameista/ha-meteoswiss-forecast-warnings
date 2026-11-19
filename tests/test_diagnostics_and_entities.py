@@ -109,6 +109,7 @@ def test_sensor_setup_skips_current_weather_sensors_without_station():
         runtime_data=SimpleNamespace(
             weather_coordinator=SimpleNamespace(data=None),
             pollen_coordinator=SimpleNamespace(data=None),
+            enabled_warning_slots=3,
         ),
     )
 
@@ -129,7 +130,14 @@ def test_sensor_setup_skips_current_weather_sensors_without_station():
         "9475.primary_warning",
         "9475.secondary_warning",
         "9475.tertiary_warning",
+        *(f"9475.warning_{rank}" for rank in range(4, 11)),
     ]
+    enabled = [
+        entity.unique_id
+        for entity in added_entities
+        if entity.entity_registry_enabled_default
+    ]
+    assert enabled == [entity.unique_id for entity in added_entities[:5]]
 
 
 def test_only_the_update_timestamps_are_diagnostic_entities():

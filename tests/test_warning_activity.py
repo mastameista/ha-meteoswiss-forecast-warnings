@@ -178,6 +178,62 @@ def test_slot_sensors_flag_whether_their_warning_is_in_force():
     assert tertiary.extra_state_attributes["active"] is None
 
 
+def test_ranked_slots_after_the_third_show_the_following_warnings():
+    from custom_components.meteoswiss_forecast_warnings.meteo import WarningType
+
+    warnings = [
+        _active(warning_type=warning_type)
+        for warning_type in (
+            WarningType.WIND,
+            WarningType.THUNDERSTORMS,
+            WarningType.RAIN,
+            WarningType.HEAT_WAVES,
+            WarningType.DROUGHT,
+        )
+    ]
+    coordinator = _coordinator(warnings)
+    ranked = coordinator.data.warning_snapshot.sorted_warnings
+
+    fourth = SwissWeatherWarningSlotSensor("8107", "Buchs ZH", 3, DEVICE, coordinator)
+    fifth = SwissWeatherWarningSlotSensor("8107", "Buchs ZH", 4, DEVICE, coordinator)
+    sixth = SwissWeatherWarningSlotSensor(
+        "8107", "Buchs ZH", 5, DEVICE, coordinator, enabled_default=False
+    )
+
+    assert fourth.unique_id == "8107.warning_4"
+    assert fourth.entity_description.translation_key == "ranked_warning"
+    assert fourth.translation_placeholders == {"rank": "4"}
+    assert fourth.native_value == ranked[3].type_state
+    assert fourth.extra_state_attributes["rank"] == 4
+    assert fifth.native_value == ranked[4].type_state
+    assert sixth.native_value == "none"
+    assert sixth.extra_state_attributes["rank"] == 6
+    assert sixth.entity_description.entity_registry_enabled_default is False
+    # The named slots keep their keys, so existing entity IDs stay.
+    primary = SwissWeatherWarningSlotSensor("8107", "Buchs ZH", 0, DEVICE, coordinator)
+    assert primary.unique_id == "8107.primary_warning"
+    assert primary.entity_description.translation_key == "primary_warning"
+
+
+@pytest.mark.parametrize(
+    ("shown", "enabled"),
+    [(None, 3), (0, 3), (1, 3), (3, 3), (6, 6), (10, 10), (25, 10), ("7", 7)],
+)
+def test_enabled_warning_slots_follow_the_swiss_weather_setting(shown, enabled):
+    from custom_components.meteoswiss_forecast_warnings.__init__ import (
+        _enabled_warning_slots,
+    )
+    from custom_components.meteoswiss_forecast_warnings.const import (
+        CONF_WEATHER_WARNINGS_NUMBER,
+    )
+
+    data = {CONF_POST_CODE: "8107"}
+    if shown is not None:
+        data[CONF_WEATHER_WARNINGS_NUMBER] = shown
+
+    assert _enabled_warning_slots(SimpleNamespace(data=data)) == enabled
+
+
 class _FakeEntityRegistry:
     def __init__(self, entities: list[SimpleNamespace]) -> None:
         self.entities = {entity.entity_id: entity for entity in entities}
@@ -212,6 +268,9 @@ def test_legacy_cleanup_keeps_current_entities_matching_legacy_patterns(monkeypa
                 "binary_sensor.buchs_zh_has_active_weather_warnings",
                 "8107.has_active_warnings",
             ),
+            # Ranked slots from 4 on get legacy-looking ids by default.
+            _registry_entry("sensor.buchs_zh_weather_warning_4", "8107.warning_4"),
+            _registry_entry("sensor.buchs_zh_weather_warning_10", "8107.warning_10"),
             # A current entity the user renamed into a legacy-looking id.
             _registry_entry("sensor.home_weather_warnings", "8107.primary_warning"),
             # Genuine legacy entities.

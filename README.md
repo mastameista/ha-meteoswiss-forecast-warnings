@@ -76,7 +76,7 @@ To change the stations or the warning setting later, open the entry and select *
 
 If the integration [Swiss Weather](https://github.com/izacus/hass-swissweather) (`swissweather`) is set up, adding this integration first offers to **take over the existing entries**. Entity IDs, history, dashboards and automations stay as they are, and the Swiss Weather entries are removed afterwards. A repair issue then reminds you to uninstall Swiss Weather in the Marketplace (in HACS on Home Assistant 2026.10).
 
-Swiss Weather keeps all entities of an entry on one device. This integration splits them over a forecast, a weather station and a pollen device and gives those the area of the old device. The warning entities of Swiss Weather (`most_severe_weather_warning`, `weather_warning_2` and so on) are replaced by the warning entities described below; dashboards and automations that use them need updating.
+Swiss Weather keeps all entities of an entry on one device. This integration splits them over a forecast, a weather station and a pollen device and gives those the area of the old device. The warning entities of Swiss Weather (`most_severe_weather_warning`, `weather_warning_2` and so on) are replaced by the warning entities described below, with as many ranked warnings enabled as Swiss Weather showed; dashboards and automations that use them need updating.
 
 ## Entities
 
@@ -91,7 +91,7 @@ Each entry creates up to three devices.
 | Has active weather warnings                     | On while at least one warning is in force.                                                                                                                                                                                                                                                                        |
 | Weather warning count                           | Number of warnings. Attributes: `active_count`, `upcoming_count`, `next_warning_start`.                                                                                                                                                                                                                           |
 | Highest weather warning level                   | Highest level of the current warnings, 1 to 5; no value while there are no warnings. Attributes: `level_name`, `icon_color`.                                                                                                                                                                                      |
-| Primary, secondary and tertiary weather warning | The three most severe warnings: highest level first; at equal level, warnings in force before announced ones, then by start. State: warning type such as `drought` or `forest_fires`, shown translated in the UI; `none` without a warning, `other` for a type this version does not know yet. Attributes: `warning_level`, `level_name`, `valid_from`, `valid_to`, `active`, `outlook`, `text`, `html_text`, `links`, `icon_color`. |
+| Primary, secondary and tertiary weather warning, weather warning 4 to 10 | The warnings by rank: highest level first; at equal level, warnings in force before announced ones, then by start. The first three are enabled; enable weather warning 4 to 10 under the device to see more warnings at once. State: warning type such as `drought` or `forest_fires`, shown translated in the UI; `none` without a warning, `other` for a type this version does not know yet. Attributes: `warning_level`, `level_name`, `valid_from`, `valid_to`, `active`, `outlook`, `text`, `html_text`, `links`, `icon_color`, `rank`. |
 
 Warning levels: 1 no or minimal danger, 2 moderate, 3 considerable, 4 high, 5 very high danger.
 
@@ -129,7 +129,7 @@ actions:
       message: "{{ state_attr('sensor.zurich_primary_weather_warning', 'text') }}"
 ```
 
-Show a warning with its level, validity, text and links in a Markdown card, without any custom cards. Add one card per slot (`primary`, `secondary`, `tertiary`):
+Show a warning with its level, validity, text and links in a Markdown card, without any custom cards. Add one card per slot (`primary`, `secondary`, `tertiary`, then `weather_warning_4` and so on):
 
 ![Weather warnings in Markdown cards](https://raw.githubusercontent.com/mastameista/ha-meteoswiss-forecast-warnings/main/docs/images/markdown-warnings.png)
 

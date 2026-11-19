@@ -75,7 +75,14 @@ async def test_full_setup_creates_three_devices_and_live_entities(hass, meteoswi
 
     entities = _entities(hass, entry)
     disabled = sorted(uid for uid, e in entities.items() if e.disabled_by is not None)
-    assert disabled == ["800100.pressure_qnh", "800100.time", "pollen-800100.pollen-time"]
+    assert disabled == sorted(
+        [
+            "800100.pressure_qnh",
+            "800100.time",
+            "pollen-800100.pollen-time",
+            *(f"800100.warning_{rank}" for rank in range(4, 11)),
+        ]
+    )
     states = {
         uid: hass.states.get(e.entity_id)
         for uid, e in entities.items()

@@ -40,6 +40,7 @@ from .const import (
     CONF_STATION_CODE,
     CONF_STATION_NAME,
     CONF_WARNINGS_ENABLED,
+    WARNING_SLOTS,
 )
 from .entity import (
     DEVICE_FORECAST,
@@ -125,6 +126,7 @@ POLLEN_SENSORS: list[SwissPollenSensorEntry] = [
     SwissPollenSensorEntry("oak", "oak", lambda pollen: first_or_none(pollen.oak), None),
 ]
 
+# Named slots; the ranks after them are named by number ("Weather warning 4").
 WARNING_SLOT_LABELS = ("primary", "secondary", "tertiary")
 EMPTY_WARNING_STATE = "none"
 WARNING_SLOT_OPTIONS = [*WARNING_TYPE_STATES, EMPTY_WARNING_STATE]
@@ -257,8 +259,9 @@ async def async_setup_entry(
                         slot_index,
                         forecast_device,
                         coordinator,
+                        enabled_default=slot_index < runtime_data.enabled_warning_slots,
                     )
-                    for slot_index in range(len(WARNING_SLOT_LABELS))
+                    for slot_index in range(WARNING_SLOTS)
                 ],
             ]
         )
@@ -414,7 +417,7 @@ class SwissWeatherWarningSlotSensor(
     SwissWeatherWarningEntity,
     SensorEntity,
 ):
-    """Expose the prioritized primary/secondary/tertiary warnings."""
+    """Expose the warning at one rank (primary, secondary, ..., 10th)."""
 
     # Warning texts, HTML and links are long and change with every warning;
     # keep them out of the recorder database.
@@ -431,25 +434,30 @@ class SwissWeatherWarningSlotSensor(
         slot_index: int,
         device_info: DeviceInfo,
         coordinator: SwissWeatherDataCoordinator,
+        enabled_default: bool = True,
     ) -> None:
         super().__init__(coordinator, device_info)
-        slot_label = WARNING_SLOT_LABELS[slot_index]
         self._slot_index = slot_index
-        self._slot_label = slot_label
+        if slot_index < len(WARNING_SLOT_LABELS):
+            key = f"{WARNING_SLOT_LABELS[slot_index]}_warning"
+            translation_key = key
+        else:
+            rank = slot_index + 1
+            key = f"warning_{rank}"
+            translation_key = "ranked_warning"
+            self._attr_translation_placeholders = {"rank": str(rank)}
         self.entity_description = SensorEntityDescription(
-            key=f"{slot_label}_warning",
-            translation_key=f"{slot_label}_warning",
+            key=key,
+            translation_key=translation_key,
+            entity_registry_enabled_default=enabled_default,
         )
-        self._attr_unique_id = f"{post_code}.{slot_label}_warning"
+        self._attr_unique_id = f"{post_code}.{key}"
 
     def _warning(self) -> Warning | None:
         if self.coordinator.data is None:
             return None
-        return {
-            0: self.coordinator.data.warning_snapshot.primary,
-            1: self.coordinator.data.warning_snapshot.secondary,
-            2: self.coordinator.data.warning_snapshot.tertiary,
-        }[self._slot_index]
+        ranked = self.coordinator.data.warning_snapshot.sorted_warnings
+        return ranked[self._slot_index] if self._slot_index < len(ranked) else None
 
     def _is_active(self, warning: Warning) -> bool:
         # Judge against the snapshot rather than the clock so this attribute and

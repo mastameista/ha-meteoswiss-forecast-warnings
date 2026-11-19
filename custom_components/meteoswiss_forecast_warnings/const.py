@@ -16,6 +16,11 @@ CONF_FORECAST_POINT_TYPE = "forecastPointType"
 CONF_FORECAST_POINT_ID = "forecastPointId"
 CONF_WARNINGS_ENABLED = "warningsEnabled"
 CONF_WEATHER_WARNINGS_NUMBER = "weatherWarningsNumber"
+# Ranked warning sensors per place. The first ones are enabled by default; the
+# others can be enabled per place. Ten matches the most Swiss Weather offered,
+# so taking over its entries keeps every warning it showed.
+WARNING_SLOTS = 10
+DEFAULT_ENABLED_WARNING_SLOTS = 3
 CONF_FORECAST_NAME = "forecastName"
 CONF_STATION_NAME = "stationName"
 CONF_POLLEN_STATION_NAME = "pollenStationName"
