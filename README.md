@@ -12,7 +12,7 @@ Home Assistant integration for Swiss weather data from MeteoSwiss: the local for
 ## Why this integration
 
 - **The forecast you know from the app.** For the local forecast of its app, MeteoSwiss combines several weather models (INCA, ICON-CH1, ICON-CH2 and ECMWF). This integration shows exactly that forecast, not the output of a single raw model.
-- **Every warning, ready for your dashboard.** All official warning types, including drought, with warnings in force kept apart from announced ones. The three most severe warnings come as sensors with icon, colour, level, validity and text, so a card can show them without templates.
+- **Every warning, ready for your dashboard.** All official warning types, with warnings in force kept apart from announced ones. Each warning, ranked by severity, comes as a sensor with icon, colour, level, validity and text, so a card can show it without templates: up to ten, the first three enabled.
 - **Built to current Home Assistant standards.** See [Quality](#quality).
 
 ## Features
